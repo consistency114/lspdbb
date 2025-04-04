@@ -56,6 +56,18 @@ var ComponentRegistry = (function() {
         type: 'enhancedCheckbox',
         group: 'custom',
         path: 'components/custom/EnhancedCheckbox.js'
+      },
+      {
+        name: 'DistrictDropdown',
+        type: 'districtDropdown',
+        group: 'gtaw',
+        path: 'components/gtaw/districtDropdown.js'
+      },
+      {
+        name: 'StreetDropdown',
+        type: 'streetDropdown',
+        group: 'gtaw',
+        path: 'components/gtaw/streetDropdown.js'
       }
       // Add additional components here
     ];

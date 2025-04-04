@@ -1,5 +1,5 @@
 # Allow access to CSS and JS files
-<FilesMatch "\.(css|js|png|jpg|jpeg|gif|svg)$">
+<FilesMatch "\.(css|json|js|png|jpg|jpeg|gif|svg)$">
     Order allow,deny
     Allow from all
 </FilesMatch>

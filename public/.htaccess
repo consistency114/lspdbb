@@ -5,7 +5,7 @@ RewriteEngine On
 RewriteBase /
 
 # Explicitly allow CSS and JS files
-<FilesMatch "\.(css|js|png|jpg|jpeg|gif|svg|webmanifest)$">
+<FilesMatch "\.(css|js|json|png|jpg|jpeg|gif|svg|webmanifest)$">
     Order allow,deny
     Allow from all
 </FilesMatch>
