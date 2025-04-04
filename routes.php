@@ -21,9 +21,11 @@ legacy('list.php', 'list');
 // Authentication Routes
 // ===================================
 // Login page
-any('/login', function() {
-    view('auth/login');
-});
+if(ENABLE_AUTH) {
+    any('/login', function() {
+        view('auth/login');
+    });
+}
 
 // Logout action
 any('/logout', function() {
@@ -112,53 +114,57 @@ get('/builder/:id', function($params) {
 // ===================================
 // Donation Route
 // ===================================
-any('/donate', function() {
-    view('donate');
-});
+if(ENABLE_DONATIONS) {
+    any('/donate', function() {
+        view('donate');
+    });
+}
 
 // ===================================
 // Edit Form Routes - For authenticated editing of forms
 // ===================================
 // Edit form - authenticated edit of existing form with ownership check
 // Change this route from a path parameter to a query parameter
-get('/edit', function() {
-    // This now handles /edit?f=formId format
-    if (!isset($_GET['f']) || empty($_GET['f'])) {
-        // No form ID provided
-        http_response_code(400);
-        echo '<div class="alert alert-danger">No form ID provided. Please specify a form to edit.</div>';
-        return;
-    }
-    
-    // Require authentication
-    auth()->requireAuth('login');
-    
-    // Check if the form exists and the user has permission to edit it
-    $formId = $_GET['f'];
-    $filename = STORAGE_DIR . '/forms/' . $formId . '_schema.json';
-    
-    if (file_exists($filename)) {
-        $formData = json_decode(file_get_contents($filename), true);
-        $currentUser = auth()->getUser();
-        
-        // Check if form has a createdBy field and if it matches the current user
-        // Admin users can edit any form
-        if (isset($formData['createdBy']) && $formData['createdBy'] === $currentUser['_id'] || 
-            $currentUser['role'] === 'admin') {
-            // User has permission to edit, redirect to builder with edit mode
-            $_GET['edit_mode'] = 'true';
-            view('builder');
-        } else {
-            // User doesn't have permission to edit this form
-            http_response_code(403);
-            echo '<div class="alert alert-danger">You do not have permission to edit this form.</div>';
+if(ENABLE_AUTH) {
+    get('/edit', function() {
+        // This now handles /edit?f=formId format
+        if (!isset($_GET['f']) || empty($_GET['f'])) {
+            // No form ID provided
+            http_response_code(400);
+            echo '<div class="alert alert-danger">No form ID provided. Please specify a form to edit.</div>';
+            return;
         }
-    } else {
-        // Form not found
-        http_response_code(404);
-        view('errors/404');
-    }
-});
+        
+        // Require authentication
+        auth()->requireAuth('login');
+        
+        // Check if the form exists and the user has permission to edit it
+        $formId = $_GET['f'];
+        $filename = STORAGE_DIR . '/forms/' . $formId . '_schema.json';
+        
+        if (file_exists($filename)) {
+            $formData = json_decode(file_get_contents($filename), true);
+            $currentUser = auth()->getUser();
+            
+            // Check if form has a createdBy field and if it matches the current user
+            // Admin users can edit any form
+            if (isset($formData['createdBy']) && $formData['createdBy'] === $currentUser['_id'] || 
+                $currentUser['role'] === 'admin') {
+                // User has permission to edit, redirect to builder with edit mode
+                $_GET['edit_mode'] = 'true';
+                view('builder');
+            } else {
+                // User doesn't have permission to edit this form
+                http_response_code(403);
+                echo '<div class="alert alert-danger">You do not have permission to edit this form.</div>';
+            }
+        } else {
+            // Form not found
+            http_response_code(404);
+            view('errors/404');
+        }
+    });
+}
 
 // ===================================
 // API Routes
@@ -171,48 +177,52 @@ any('/ajax', function() {
 // ===================================
 // User Routes
 // ===================================
-// Profile
-any('/profile', function() {
-    view('user/profile');
-});
+if(ENABLE_AUTH) {
+    // Profile
+    any('/profile', function() {
+        view('user/profile');
+    });
 
-// Account management
-any('/account', function() {
-    view('user/account');
-});
+    // Account management
+    any('/account', function() {
+        view('user/account');
+    });
 
-// List management
-any('/lists', function() {
-    view('user/lists');
-});
+    // List management
+    any('/lists', function() {
+        view('user/lists');
+    });
+}
 
 // ===================================
 // Admin & Management Routes
 // ===================================
-// Admin panel
-any('/admin', function() {
-    view('admin/admin');
-});
+if(ENABLE_AUTH) {
+    // Admin panel
+    any('/admin', function() {
+        view('admin/admin');
+    });
 
-// User management
-any('/admin/users', function() {
-    view('admin/users');
-});
+    // User management
+    any('/admin/users', function() {
+        view('admin/users');
+    });
 
-// Account sharing
-any('/admin/share', function() {
-    view('admin/share');
-});
+    // Account sharing
+    any('/admin/share', function() {
+        view('admin/share');
+    });
 
-// List Management Admin Page
-any('/admin/lists', function() {
-    view('admin/lists');
-});
+    // List Management Admin Page
+    any('/admin/lists', function() {
+        view('admin/lists');
+    });
 
-// Analytics dashboard
-any('/analytics', function() {
-    view('admin/analytics');
-});
+    // Analytics dashboard
+    any('/analytics', function() {
+        view('admin/analytics');
+    });
+}
 
 // ===================================
 // Documentation Routes

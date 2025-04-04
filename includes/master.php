@@ -166,11 +166,13 @@ function generate_meta_tags() {
         <?php if (page_setting('footer', 'form')): ?>
             <footer class="footer">
                 <p>Made using <a href="<?php echo site_url(); ?>" target="_blank"><?php echo SITE_NAME; ?></a> <?php echo APP_VERSION; ?></br>
-                <?php if (isset($_GET['f']) && !empty($_GET['f'])): ?>
+                <?php if (isset($_GET['f']) && (auth()->hasRole('admin') || ENABLE_JSON_VIEW) && !empty($_GET['f'])): ?>
                     <a href="?f=<?php echo htmlspecialchars($_GET['f']) ?>/json">View form in json</a> • 
                     <a href="<?php echo site_url('builder'); ?>?f=<?php echo htmlspecialchars($_GET['f']) ?>">Use this form as a template</a> • 
                 <?php endif; ?>
-                <a href="<?php echo site_url('donate'); ?>" class="donate-footer-link"><i class="bi bi-heart-fill"></i> Donate</a> • 
+                <?php if (ENABLE_DONATIONS): ?>
+                    <a href="<?php echo site_url('donate'); ?>" class="donate-footer-link"><i class="bi bi-heart-fill"></i> Donate</a> • 
+                <?php endif; ?>
                 <a href="#" class="dark-mode-toggle">🌙 Dark Mode</a><br/>
                 <a href="<?php echo FOOTER_GITHUB; ?>">Github</a></p>
             </footer>
@@ -181,8 +183,10 @@ function generate_meta_tags() {
                     <a href="<?php echo site_url('profile'); ?>">My Forms</a> • 
                 <?php endif; ?>
                 <a href="<?php echo FOOTER_GITHUB; ?>" target="_blank">Github</a> • 
-                <a href="<?php echo site_url('docs'); ?>" target="_blank">Documentation</a> • 
-                <a href="<?php echo site_url('donate'); ?>" class="donate-footer-link"><i class="bi bi-heart-fill"></i> Donate</a> • 
+                <a href="<?php echo DOCS_URL; ?>" target="_blank">Documentation</a> • 
+                <?php if (ENABLE_DONATIONS): ?>
+                    <a href="<?php echo site_url('donate'); ?>" class="donate-footer-link"><i class="bi bi-heart-fill"></i> Donate</a> • 
+                <?php endif; ?>
                 <a href="#" class="dark-mode-toggle">🌙 Dark Mode</a></br>
                 <span style="font-size: 12px;"><?php echo APP_VERSION; ?></span></p>
             </footer>

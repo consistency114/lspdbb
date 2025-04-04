@@ -33,7 +33,7 @@ ob_start();
             </div>
             
             <div class="docs-link">
-                <a href="<?php echo site_url('docs'); ?>">
+                <a href="<?php echo DOCS_URL; ?>">
                     <i class="bi bi-book"></i> Learn more in our documentation
                 </a>
             </div>
@@ -63,32 +63,36 @@ ob_start();
                 </div>
                 
                 <div class="additional-links">
-                    <a href="<?php echo site_url('docs'); ?>" class="text-decoration-none">
+                    <a href="<?php echo DOCS_URL; ?>" class="text-decoration-none">
                         <i class="bi bi-question-circle"></i> How it works
                     </a>
                     <a href="<?php echo FOOTER_GITHUB; ?>" target="_blank" class="text-decoration-none">
                         <i class="bi bi-github"></i> GitHub
                     </a>
-                    <a href="<?php echo site_url('donate'); ?>" class="text-decoration-none donate-link">
-                        <i class="bi bi-heart"></i> Donate
-                    </a>
+                    <?php if (ENABLE_DONATIONS): ?>
+                        <a href="<?php echo site_url('donate'); ?>" class="text-decoration-none donate-link">
+                            <i class="bi bi-heart"></i> Donate
+                        </a>
+                    <?php endif; ?>
                     <a href="#" class="dark-mode-toggle text-decoration-none">
                         <i class="bi bi-moon"></i> Dark Mode
                     </a>
                 </div>
 
                 <!-- Login button -->
-                <div class="login-button">
-                    <?php if (!auth()->isLoggedIn()): ?>
-                    <a href="<?php echo site_url('login'); ?>" class="btn btn-outline-primary">
-                        <i class="bi bi-person"></i> Login
-                    </a>
-                    <?php else: ?>
-                    <a href="<?php echo site_url('profile'); ?>" class="btn btn-outline-primary">
-                        <i class="bi bi-person"></i> <?php echo htmlspecialchars(auth()->getUser()['username']); ?>
-                    </a>
-                    <?php endif ?>
-                </div>
+                <?php if (ENABLE_AUTH): ?>
+                    <div class="login-button">
+                        <?php if (!auth()->isLoggedIn()): ?>
+                        <a href="<?php echo site_url('login'); ?>" class="btn btn-outline-primary">
+                            <i class="bi bi-person"></i> Login
+                        </a>
+                        <?php else: ?>
+                        <a href="<?php echo site_url('profile'); ?>" class="btn btn-outline-primary">
+                            <i class="bi bi-person"></i> <?php echo htmlspecialchars(auth()->getUser()['username']); ?>
+                        </a>
+                        <?php endif ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

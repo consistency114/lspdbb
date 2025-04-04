@@ -19,28 +19,30 @@ $formWidth = 45;
 $isOwnForm = false;
 
 if (isset($_GET['f']) && !empty($_GET['f'])) {
-    $formId = $_GET['f'];
-    $filename = STORAGE_DIR . '/forms/' . $formId . '_schema.json';
+    if(ENABLE_JSON_VIEW || auth()->hasRole('admin')) {
+        $formId = $_GET['f'];
+        $filename = STORAGE_DIR . '/forms/' . $formId . '_schema.json';
 
-    if (file_exists($filename)) {
-        $fileContent = file_get_contents($filename);
-        $formData = json_decode($fileContent, true);
-        if ($formData && isset($formData['schema'])) {
-            $existingSchema = json_encode($formData['schema']);
-            $existingFormName = isset($formData['formName']) ? $formData['formName'] : '';
-            $existingTemplate = isset($formData['template']) ? $formData['template'] : '';
-            $existingTemplateTitle = isset($formData['templateTitle']) ? $formData['templateTitle'] : ''; 
-            $existingTemplateLink = isset($formData['templateLink']) ? $formData['templateLink'] : '';
-            $enableTemplateTitle = isset($formData['enableTemplateTitle']) ? $formData['enableTemplateTitle'] : false;
-            $enableTemplateLink = isset($formData['enableTemplateLink']) ? $formData['enableTemplateLink'] : false;
-            $existingFormStyle = isset($formData['formStyle']) ? $formData['formStyle'] : 'default';
-            $formWidth = isset($formData['formWidth']) ? $formData['formWidth'] : 45;
-            $formCreator = isset($formData['createdBy']) ? $formData['createdBy'] : null;
-            
-            // Check if the current user is the creator of this form
-            if (auth()->isLoggedIn()) {
-                $currentUser = auth()->getUser();
-                $isOwnForm = ($formCreator === $currentUser['_id'] || $currentUser['role'] === 'admin');
+        if (file_exists($filename)) {
+            $fileContent = file_get_contents($filename);
+            $formData = json_decode($fileContent, true);
+            if ($formData && isset($formData['schema'])) {
+                $existingSchema = json_encode($formData['schema']);
+                $existingFormName = isset($formData['formName']) ? $formData['formName'] : '';
+                $existingTemplate = isset($formData['template']) ? $formData['template'] : '';
+                $existingTemplateTitle = isset($formData['templateTitle']) ? $formData['templateTitle'] : ''; 
+                $existingTemplateLink = isset($formData['templateLink']) ? $formData['templateLink'] : '';
+                $enableTemplateTitle = isset($formData['enableTemplateTitle']) ? $formData['enableTemplateTitle'] : false;
+                $enableTemplateLink = isset($formData['enableTemplateLink']) ? $formData['enableTemplateLink'] : false;
+                $existingFormStyle = isset($formData['formStyle']) ? $formData['formStyle'] : 'default';
+                $formWidth = isset($formData['formWidth']) ? $formData['formWidth'] : 45;
+                $formCreator = isset($formData['createdBy']) ? $formData['createdBy'] : null;
+                
+                // Check if the current user is the creator of this form
+                if (auth()->isLoggedIn()) {
+                    $currentUser = auth()->getUser();
+                    $isOwnForm = ($formCreator === $currentUser['_id'] || $currentUser['role'] === 'admin');
+                }
             }
         }
     }
@@ -255,7 +257,7 @@ ob_start();
     </div>
 
     <div id="documentation-link" class="text-center mt-3 mb-3">
-        <a href="<?php echo SITE_URL; ?>/documentation.php" target="_blank" class="btn btn-info">
+        <a href="<?php echo DOCS_URL; ?>" target="_blank" class="btn btn-info">
             <i class="bi bi-book"></i> Documentation
         </a>
     </div>

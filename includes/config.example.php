@@ -20,51 +20,60 @@ define('SITE_DESCRIPTION', 'BBCode done differently');
 
 // URLs and paths
 define('SITE_URL',         'https://rebb.booskit.dev');
-define('FOOTER_GITHUB',    'https://github.com/booskit-codes/reBB');
-
-// Directory structure
+define('DOCS_URL',         'https://rebb.booskit.dev/docs');
 define('ASSETS_DIR',       SITE_URL . '/assets');
+
+// External links
+define('FOOTER_GITHUB',    'https://github.com/booskit-codes/reBB');
 
 // ╔════════════════════════════════════════╗
 // ║       APPLICATION CONFIGURATION        ║
 // ╚════════════════════════════════════════╝
 
-// Environment: 'development' or 'production'
+// Environment and debugging
 define('ENVIRONMENT',      'production');
+define('DEBUG_MODE',       ENVIRONMENT === 'development');
 
-// Session Lifetime
-define('SESSION_LIFETIME', 86400);
+// Session settings
+define('SESSION_LIFETIME', 86400);    // 24 hours in seconds
 
-// Form Builder Submission settings
-define('MAX_REQUESTS_PER_HOUR', 60);    // Maximum form submissions per hour per IP
-define('COOLDOWN_PERIOD', 5);           // Seconds between submissions
-define('MAX_SCHEMA_SIZE_GUEST', 1000000);       // 1MB by default
-define('MAX_SCHEMA_SIZE_MEMBER', 10000000);     // 10MB by default
-define('IP_BLACKLIST', ['192.0.2.1']);  // Example blacklisted IPs (replace with actual ones)
+// Security and rate limiting
+define('MAX_REQUESTS_PER_HOUR', 60);  // Maximum form submissions per hour per IP
+define('COOLDOWN_PERIOD',        5);  // Seconds between submissions
+define('IP_BLACKLIST',           ['192.0.2.1']);  // Example blacklisted IPs
 
-// Custom Shareable Links settings
-define('DEFAULT_MAX_UNIQUE_LINKS', 5);  // Default maximum number of custom links per user
-define('CUSTOM_LINK_MIN_LENGTH', 3);    // Minimum length for custom links
-define('CUSTOM_LINK_MAX_LENGTH', 30);   // Maximum length for custom links
+// Form size limits
+define('MAX_SCHEMA_SIZE_GUEST',  1000000);   // 1MB for guests
+define('MAX_SCHEMA_SIZE_MEMBER', 10000000);  // 10MB for registered members
 
-// Routing configuration
-define('LEGACY_URLS_ENABLED', true);  // Set to false to disable legacy URL support (form.php, etc.)
+// Custom link settings
+define('DEFAULT_MAX_UNIQUE_LINKS', 5);       // Maximum number of custom links per user
+define('CUSTOM_LINK_MIN_LENGTH',   3);       // Minimum length for custom links
+define('CUSTOM_LINK_MAX_LENGTH',   30);      // Maximum length for custom links
 
-// Feature flags
-define('DEBUG_MODE',         ENVIRONMENT === 'development');
+// Donations and other site settings
+define('ENABLE_AUTH',       true);                             // Enables the authentication system (login page)
+define('ENABLE_DONATIONS',  false);                             // Enables the "donations" button and links.
+define('ENABLE_JSON_VIEW',  true);                              // Enables the ability to view a form's json contents / copy someone's form.
+
+// Footer settings
+define('FOOTER_TEXT',       'Made with ❤️ by <a href="https://booskit.dev/" target="_blank">booskit</a>');
+
+// Backward compatibility
+define('LEGACY_URLS_ENABLED', true);         // Support for legacy URL patterns (form.php, etc.)
 
 // ╔════════════════════════════════════════╗
 // ║         ANALYTICS CONFIGURATION        ║
 // ╚════════════════════════════════════════╝
 
-// Enable or disable the analytics system globally
-define('ENABLE_ANALYTICS',    true);
+// Master switch for analytics
+define('ENABLE_ANALYTICS', true);
 
-// Configure what to track
-define('TRACK_VISITORS',      true);    // Track page views and visitor counts
-define('TRACK_COMPONENTS',    true);    // Track component usage statistics
-define('TRACK_THEMES',        true);    // Track theme selection statistics
-define('TRACK_FORM_USAGE',    true);    // Track form views and submissions
+// Analytics feature toggles
+define('TRACK_VISITORS',   true);     // Track page views and visitor counts
+define('TRACK_COMPONENTS', true);     // Track component usage statistics
+define('TRACK_THEMES',     true);     // Track theme selection statistics
+define('TRACK_FORM_USAGE', true);     // Track form views and submissions
 
 /**
  * End of configuration

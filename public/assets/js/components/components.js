@@ -50,6 +50,12 @@ var ComponentRegistry = (function() {
         type: 'toggleSwitch',
         group: 'custom',
         path: 'components/custom/ToggleSwitch.js'
+      },
+      {
+        name: 'EnhancedCheckbox',
+        type: 'enhancedCheckbox',
+        group: 'custom',
+        path: 'components/custom/EnhancedCheckbox.js'
       }
       // Add additional components here
     ];

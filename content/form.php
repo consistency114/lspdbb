@@ -202,17 +202,22 @@ if (isset($_GET['f'])) {
 }
 
 if ($isJsonRequest) {
-    $filename = STORAGE_DIR . '/forms/' . $formName . '_schema.json';
-    if (file_exists($filename)) {
-        header('Content-Type: application/json');
-        $fileContents = file_get_contents($filename);
-        echo $fileContents;
-        exit(); // Stop further HTML rendering
-    } else {
-        header('Content-Type: text/plain');
-        echo "Form JSON not found for form: " . htmlspecialchars($formName);
-        exit();
+    if(ENABLE_JSON_VIEW || auth()->hasRole('admin')) {
+        $filename = STORAGE_DIR . '/forms/' . $formName . '_schema.json';
+        if (file_exists($filename)) {
+            header('Content-Type: application/json');
+            $fileContents = file_get_contents($filename);
+            echo $fileContents;
+            exit(); // Stop further HTML rendering
+        } else {
+            header('Content-Type: text/plain');
+            echo "Form JSON not found for form: " . htmlspecialchars($formName);
+            exit();
+        }
     }
+    header('Content-Type: text/plain');
+    echo "ENABLE_JSON_VIEW is disabled!";
+    exit();
 } else {
     header('Content-Type: text/html');
     $formSchema = null;

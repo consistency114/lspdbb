@@ -9,7 +9,7 @@
 
 // Define the base path for the application
 if (!defined('APP_VERSION')) {
-    define('APP_VERSION', 'v1.5.6');
+    define('APP_VERSION', 'v1.5.7');
 }
 
 // Define the public path for the application
@@ -223,7 +223,11 @@ $required_constants = [
     'DEFAULT_MAX_UNIQUE_LINKS',
     'CUSTOM_LINK_MIN_LENGTH',
     'CUSTOM_LINK_MAX_LENGTH',
-    'LEGACY_URLS_ENABLED'
+    'LEGACY_URLS_ENABLED',
+    'ENABLE_DONATIONS',
+    'ENABLE_AUTH',
+    'ENABLE_JSON_VIEW',
+    'FOOTER_TEXT'
 ];
 
 $missing_constants = [];
