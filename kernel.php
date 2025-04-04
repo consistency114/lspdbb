@@ -7,11 +7,6 @@
  * entry points.
  */
 
-// Define the base path for the application
-if (!defined('APP_VERSION')) {
-    define('APP_VERSION', 'v1.5.7');
-}
-
 // Define the public path for the application
 if (!defined('PUBLIC_DIR')) {
     define('PUBLIC_DIR', dirname(__FILE__));
@@ -31,6 +26,10 @@ if (!defined('ROOT_DIR')) {
 // Define the public path for the application
 if (!defined('STORAGE_DIR')) {
     define('STORAGE_DIR', ROOT_DIR . '/storage');
+}
+
+if (!defined('APP_VERSION')) {
+    require_once ROOT_DIR . '/version.php';
 }
 
 /**
