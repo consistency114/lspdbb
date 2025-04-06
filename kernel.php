@@ -226,7 +226,8 @@ $required_constants = [
     'ENABLE_DONATIONS',
     'ENABLE_AUTH',
     'ENABLE_JSON_VIEW',
-    'FOOTER_TEXT'
+    'FOOTER_TEXT',
+    'DOCS_URL'
 ];
 
 $missing_constants = [];
