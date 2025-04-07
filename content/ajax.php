@@ -297,10 +297,10 @@ if ($requestType === 'schema') {
                     ]);
                 }
                 
-                logAttempt("Updated form in database: $editingFormId by user: " . $currentUser['username']);
+                logAttempt("Updated form in database: $editingFormId by user: " . $currentUser['username'], false);
             } catch (\Exception $e) {
                 // Log the error but don't stop the process
-                logAttempt("Error updating form in database: " . $e->getMessage(), false);
+                logAttempt("Error updating form in database: " . $e->getMessage());
             }
         }
         
