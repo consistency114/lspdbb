@@ -127,3 +127,28 @@ body {
 .donate-footer-link i {
     font-size: 0.8em;
 }
+
+.badge-danger {
+    color: #fff;
+    background-color: #dc3545;
+}
+
+.badge-warning {
+    color: #212529;
+    background-color: #ffc107;
+}
+
+.badge-success {
+    color: #fff;
+    background-color: #28a745;
+}
+
+.badge-dark {
+    color: #fff;
+    background-color: #343a40;
+}
+
+.mr-2,
+.mx-2 {
+  margin-right: 0.5rem !important;
+}
