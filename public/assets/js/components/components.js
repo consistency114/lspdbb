@@ -68,7 +68,15 @@ var ComponentRegistry = (function() {
         type: 'streetDropdown',
         group: 'gtaw',
         path: 'components/gtaw/streetDropdown.js'
+      },
+      /* WIP: Penal Code Selector
+      {
+        name: 'PenalCodeSelector',
+        type: 'penalCodeSelector',
+        group: 'gtaw',
+        path: 'components/gtaw/penalCodeSelector.js'
       }
+      */
       // Add additional components here
     ];
     
