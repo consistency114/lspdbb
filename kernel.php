@@ -227,7 +227,8 @@ $required_constants = [
     'ENABLE_AUTH',
     'ENABLE_JSON_VIEW',
     'FOOTER_TEXT',
-    'DOCS_URL'
+    'DOCS_URL',
+    'JSON_URL'
 ];
 
 $missing_constants = [];
