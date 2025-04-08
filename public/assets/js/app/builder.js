@@ -652,10 +652,4 @@
     document.getElementById('formWidthInput').addEventListener('input', function() {
         document.getElementById('formWidthSlider').value = this.value;
     });
-    
-    // Load existing value if available
-    if (existingFormWidth) {
-        document.getElementById('formWidthSlider').value = existingFormWidth;
-        document.getElementById('formWidthInput').value = existingFormWidth;
-    }
 })();
