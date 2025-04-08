@@ -1,3 +1,11 @@
+/**
+ * form.js - Form handling and template processing
+ * This file handles the initialization, submission, and output generation for forms
+ */
+
+// Store a reference to the form instance so we can access it from event handlers
+let formInstance = null;
+
 // Wait for all scripts to load before initializing the form
 document.addEventListener('DOMContentLoaded', function() {
     // Track form usage
@@ -7,7 +15,96 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
         initializeFormWithComponents();
     }, 100);
+    
+    // Add handler for Autogrammar functionality
+    document.addEventListener('input', function(event) {
+        // Check if the target is an input or textarea in a formio component
+        if ((event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') && 
+            (event.target.closest('.formio-component-textfield') || event.target.closest('.formio-component-textarea'))) {
+            
+            // Make sure we have a form instance
+            if (!formInstance) return;
+            
+            // Extract the component key from the input's name attribute (format is data[key])
+            let inputName = event.target.name;
+            if (!inputName) return;
+            
+            // Extract the component key from name="data[componentKey]" format
+            let matches = inputName.match(/data\[(.*?)\]/);
+            if (!matches || matches.length < 2) return;
+            
+            let componentKey = matches[1];
+            
+            // Now find the component in the form schema
+            const component = findComponentByKey(formInstance.form.components, componentKey);
+            
+            // If component has autogrammar enabled, apply transformation
+            if (component && component.case == 'autogrammar') {
+                const value = event.target.value;
+                if (value) {
+                    // Capitalize first letter, lowercase the rest
+                    const transformed = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+                    
+                    // Only update if it's different to avoid input loop
+                    if (value !== transformed) {
+                        // Get cursor position
+                        const cursorPos = event.target.selectionStart;
+                        
+                        // Update value
+                        event.target.value = transformed;
+                        
+                        // Restore cursor position
+                        event.target.setSelectionRange(cursorPos, cursorPos);
+                    }
+                }
+            }
+        }
+    });
 });
+
+// Recursive function to find a component by its key in the component tree
+function findComponentByKey(components, key) {
+    if (!components) return null;
+    
+    for (let i = 0; i < components.length; i++) {
+        const component = components[i];
+        
+        // Direct match
+        if (component.key === key) {
+            return component;
+        }
+        
+        // Search in nested components (columns, panels, containers, etc.)
+        if (component.components) {
+            const found = findComponentByKey(component.components, key);
+            if (found) return found;
+        }
+        
+        // Search in columns
+        if (component.columns) {
+            for (let j = 0; j < component.columns.length; j++) {
+                if (component.columns[j].components) {
+                    const found = findComponentByKey(component.columns[j].components, key);
+                    if (found) return found;
+                }
+            }
+        }
+        
+        // Search in rows (for datagrid-like components)
+        if (component.rows) {
+            for (let j = 0; j < component.rows.length; j++) {
+                for (let k = 0; k < component.rows[j].length; k++) {
+                    if (component.rows[j][k].components) {
+                        const found = findComponentByKey(component.rows[j][k].components, key);
+                        if (found) return found;
+                    }
+                }
+            }
+        }
+    }
+    
+    return null;
+}
 
 // Initialize form with components loaded first
 function initializeFormWithComponents() {
@@ -54,6 +151,8 @@ function createFormWithSchema() {
     Formio.createForm(document.getElementById('formio'), formSchema, { noAlerts: true })
         .then(function(form) {
             console.log('Form created successfully');
+            // Store form instance globally so we can access it in event handlers
+            formInstance = form;
             setupFormEventHandlers(form);
         })
         .catch(function(error) {
@@ -130,10 +229,20 @@ function setupFormEventHandlers(form) {
 
     // Handle form submission
     form.on('submit', function(submission) {
-        // Clone the data to prevent any issues with form reset
+        // Apply autogrammar transformation to the original form data
+        Object.keys(submission.data).forEach(key => {
+            const component = findComponentByKey(form.form.components, key);
+            if (component && component.case === 'autogrammar' && submission.data[key]) {
+                // Apply the transform: first letter uppercase, rest lowercase
+                submission.data[key] = submission.data[key].charAt(0).toUpperCase() + 
+                                      submission.data[key].slice(1).toLowerCase();
+            }
+        });
+        
+        // Clone the transformed data to prevent any issues with form reset
         const submissionCopy = JSON.parse(JSON.stringify(submission.data));
         
-        // Find and process all date inputs in the form - look for any ISO format date (contains 'T' and possibly 'Z')
+        // Rest of your existing date input processing, etc.
         document.querySelectorAll('input[type="hidden"][value*="T"]').forEach(hiddenInput => {
             const key = hiddenInput.name.replace('data[', '').replace(']', '');
             

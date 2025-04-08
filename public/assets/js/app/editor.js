@@ -4,6 +4,7 @@
  * This file modifies the Form.io component editor to:
  * 1. Add a "Preserve Key" checkbox in the API tab
  * 2. Add a "Disable wildcard generation" checkbox in the API tab
+ * 3. Add an "Autogrammar" option to the Text Case radio group
  */
 
 (function() {
@@ -130,6 +131,33 @@
                                 const preserveKeyIndex = apiTab.components.findIndex(c => c.key === 'uniqueKey');
                                 const insertIndex = preserveKeyIndex !== -1 ? preserveKeyIndex + 1 : keyFieldIndex + 1;
                                 apiTab.components.splice(insertIndex, 0, disableWildcardCheckbox);
+                            }
+                        }
+                    }
+                    
+                    // MODIFY THE TEXT CASE RADIO GROUP FOR TEXT FIELDS AND TEXTAREAS
+                    if (type === 'textfield' || type === 'textarea') {
+                        // Find the data tab
+                        const dataTab = tabsComponent.components.find(c => c.key === 'data');
+                        
+                        if (dataTab && dataTab.components) {
+                            // Find the 'case' radio component (text case options)
+                            const caseComponentIndex = dataTab.components.findIndex(c => c.key === 'case');
+                            
+                            if (caseComponentIndex !== -1) {
+                                const caseComponent = dataTab.components[caseComponentIndex];
+                                
+                                // Check if the autogrammar option already exists
+                                const hasAutogrammarOption = caseComponent.values && 
+                                                            caseComponent.values.some(v => v.value === 'autogrammar');
+                                
+                                if (!hasAutogrammarOption && caseComponent.values) {
+                                    // Add the Autogrammar option to the existing radio values
+                                    caseComponent.values.push({
+                                        label: 'Autogrammar (First letter capitalized)',
+                                        value: 'autogrammar'
+                                    });
+                                }
                             }
                         }
                     }
