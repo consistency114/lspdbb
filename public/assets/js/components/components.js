@@ -31,7 +31,7 @@ var ComponentRegistry = (function() {
         name: 'UnitSection',
         type: 'unitSection',
         group: 'gtaw',
-        path: 'components/gtaw/UnitSection.js'
+        path: 'components/gtaw/unitSection.js'
       },
       {
         name: 'TextfieldCookies',
@@ -69,14 +69,12 @@ var ComponentRegistry = (function() {
         group: 'gtaw',
         path: 'components/gtaw/streetDropdown.js'
       },
-      /*
       {
         name: 'PenalCodeSelector',
         type: 'penalCodeSelector',
         group: 'gtaw',
         path: 'components/gtaw/penalCodeSelector.js'
       }
-      */
       // Add additional components here
     ];
     
