@@ -302,6 +302,7 @@ $enableTemplateTitleJS = $enableTemplateTitle ? 'true' : 'false';
 $enableTemplateLinkJS = $enableTemplateLink ? 'true' : 'false';
 $existingStyleJS = json_encode($existingFormStyle);
 $siteURL = site_url();
+$jsonURL = JSON_URL;
 $isEditModeJS = $editMode && $isOwnForm ? 'true' : 'false';
 $assets_base_path = asset_path('js/');
 
@@ -316,6 +317,7 @@ let enableTemplateTitlePHP = $enableTemplateTitleJS;
 let enableTemplateLinkPHP = $enableTemplateLinkJS;
 let existingFormStyle = $existingStyleJS;
 let siteURL = "$siteURL";
+let jsonURL = "$jsonURL";
 let isEditMode = $isEditModeJS;
 let ASSETS_BASE_PATH = "$assets_base_path";
 JSVARS;

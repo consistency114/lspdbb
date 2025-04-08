@@ -21,6 +21,7 @@ define('SITE_DESCRIPTION', 'BBCode done differently');
 // URLs and paths
 define('SITE_URL',         'https://rebb.booskit.dev');
 define('DOCS_URL',         'https://rebb.booskit.dev/docs');
+define('JSON_URL',         'https://sys.booskit.dev/cdn/serve.php?file=');
 define('ASSETS_DIR',       SITE_URL . '/assets');
 
 // External links

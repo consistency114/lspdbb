@@ -451,6 +451,7 @@ if ((!$dangerousJSDetected || $bypassSecurityCheck || $isVerified) && !$isBlackl
     $enableTemplateLinkJS = $enableTemplateLink ? 'true' : 'false';
     $assets_base_path = asset_path('js/');
     $siteURL = site_url();
+    $jsonURL = JSON_URL;
     $GLOBALS['page_js_vars'] = <<<JSVARS
 const formSchema = $formSchema;
 const formTemplate = $formTemplate;
@@ -459,6 +460,7 @@ const formTemplateLink = $formTemplateLink;
 const enableTemplateTitle = $enableTemplateTitleJS;
 const enableTemplateLink = $enableTemplateLinkJS;
 let siteURL = "$siteURL";
+let jsonURL = "$jsonURL";
 let ASSETS_BASE_PATH = "$assets_base_path";
 JSVARS;
 

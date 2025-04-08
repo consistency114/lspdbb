@@ -53,7 +53,7 @@
       
       // Function to load and process the penal codes
       loadPenalCodes() {
-        const url = siteURL + '/assets/json/penalSearch.json';
+        const url = jsonURL + 'gtaw_penal_code.json';
         
         fetch(url)
           .then(response => response.json())

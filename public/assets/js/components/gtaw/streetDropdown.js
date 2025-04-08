@@ -29,7 +29,7 @@
           placeholder: 'Select a street',
           dataSrc: 'url',
           data: {
-            url: siteURL + '/assets/json/gtaw_locations.json',
+            url: jsonURL + 'gtaw_locations.json',
             headers: [
               {
                 key: 'Content-Type',
