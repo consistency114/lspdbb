@@ -2,6 +2,7 @@
  * Penal Code Search Component
  * A dropdown component with penal code options loaded from JSON
  * and formatted with color-coded badges
+ * Now with support for multiple selection
  */
 (function() {
   // Get the base SelectComponent class from Form.io
@@ -33,18 +34,62 @@
         },
         template: '<span class="mr-2 badge badge-{{item.badgeType}}">{{item.charge_id}}</span>{{item.label}}',
         searchEnabled: true,
-        // Remove the searchField property to use the custom filtering below
-        // searchField: 'label'
+        multiple: false,
+        defaultValue: '' // Will be set to [] if multiple is true
       });
     }
 
-    // Inherit the edit form from the parent
+    // Override the default value based on multiple selection setting
+    constructor(component, options, data) {
+      // Ensure the default value is appropriate for the multiple selection mode
+      if (component.multiple && component.defaultValue === '') {
+        component.defaultValue = [];
+      }
+      
+      super(component, options, data);
+    }
+
+    // Inherit the edit form from the parent with some modifications
     static editForm() {
-      return SelectComponent.editForm();
+      const form = SelectComponent.editForm();
+      
+      // Find the 'multiple' checkbox component in the data section
+      const dataTab = form.components.find(tab => 
+        tab.key === 'tabs' && 
+        tab.components.find(c => c.key === 'data')
+      );
+      
+      if (dataTab) {
+        const dataPanel = dataTab.components.find(c => c.key === 'data');
+        if (dataPanel) {
+          // Find the multiple checkbox
+          const multipleComp = dataPanel.components.find(c => c.key === 'multiple');
+          if (multipleComp) {
+            // Add a custom change event handler
+            multipleComp.customConditional = function(context) {
+              // If multiple is checked, ensure defaultValue is an array
+              if (context.value) {
+                const defaultValueComp = dataPanel.components.find(c => c.key === 'defaultValue');
+                if (defaultValueComp && typeof context.data.defaultValue !== 'object') {
+                  context.data.defaultValue = [];
+                }
+              }
+              return true;
+            };
+          }
+        }
+      }
+      
+      return form;
     }
 
     // Initialize the component after it's created
     init() {
+      // Ensure defaultValue is appropriate for selection mode before init
+      if (this.component.multiple && !Array.isArray(this.component.defaultValue)) {
+        this.component.defaultValue = [];
+      }
+      
       // Call parent init
       super.init();
       
@@ -127,6 +172,28 @@
           }];
           this.redraw();
         });
+    }
+    
+    // Override setValue to handle array values properly for multiple selection
+    setValue(value, flags) {
+      // Ensure value is an array when multiple is enabled
+      if (this.component.multiple && value && !Array.isArray(value)) {
+        value = [value];
+      }
+      
+      return super.setValue(value, flags);
+    }
+    
+    // Properly handle different value formats
+    normalizeValue(value) {
+      if (this.component.multiple && !Array.isArray(value)) {
+        if (value === '' || value === null || value === undefined) {
+          return [];
+        }
+        return [value];
+      }
+      
+      return super.normalizeValue(value);
     }
   }
 
