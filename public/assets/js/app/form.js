@@ -225,6 +225,9 @@ function setupFormEventHandlers(form) {
                 }
             }
         });
+
+        // Process components with isMulti flag to add the multi-input functionality
+        setupMultiInputFields(form);
     }, 500);
 
     // Handle form submission
@@ -241,6 +244,9 @@ function setupFormEventHandlers(form) {
         
         // Clone the transformed data to prevent any issues with form reset
         const submissionCopy = JSON.parse(JSON.stringify(submission.data));
+        
+        // Process multi-input fields if any exist
+        collectMultiInputValues(submissionCopy);
         
         // Rest of your existing date input processing, etc.
         document.querySelectorAll('input[type="hidden"][value*="T"]').forEach(hiddenInput => {
@@ -400,7 +406,7 @@ function processTemplate(template, data) {
         processedTemplate += template.substring(currentIndex, match.index);
         
         if (Array.isArray(componentData)) {
-            // REVERT TO THE SIMPLE APPROACH FOR DATAGRIDS
+            // For datagrids, process as usual
             
             // HACK: Skip the first row of each datagrid
             if (componentData.length > 0) {
@@ -415,7 +421,7 @@ function processTemplate(template, data) {
                 }
             });
             
-            // Process rows (skipping the first one) - USING THE OLD SIMPLE APPROACH
+            // Process rows (skipping the first one)
             componentData.forEach((rowData, index) => {
                 let rowContent = sectionContent;
                 
@@ -436,12 +442,42 @@ function processTemplate(template, data) {
                 processedTemplate += rowContent;
             });
         } else if (componentId in data) {
-            // Handle non-datagrid fields
-            let content = sectionContent;
-            content = content.replace(/\{(\w+)\}/g, (placeholder, key) => {
-                return key in data ? data[key] : '';
-            });
-            processedTemplate += content;
+            // Look for a component with isMulti=true and process it
+            const component = findComponentWithKey(data, componentId);
+            
+            if (component && component.isMulti && component.values && Array.isArray(component.values)) {
+                // This is a multi-input field with isMulti=true, process each value
+                component.values.forEach((value, index) => {
+                    if (value === undefined || value === null || value === '') return;
+                    
+                    let rowContent = sectionContent;
+                    
+                    // Replace placeholders with this value
+                    rowContent = rowContent.replace(/\{(\w+)\}/g, (placeholder, key) => {
+                        if (key === componentId) {
+                            return value; // Use the current value
+                        } else if (key === `${componentId}_value`) {
+                            return value; // Also support the _value suffix
+                        } else if (key === `${componentId}_index`) {
+                            return index; // Current index value
+                        } else if (key === `${componentId}_count`) {
+                            return component.values.length; // Total count
+                        } else {
+                            // For any other key, try to find it in the data
+                            return key in data ? data[key] : '';
+                        }
+                    });
+                    
+                    processedTemplate += rowContent;
+                });
+            } else {
+                // For regular non-multi fields, just process once
+                let content = sectionContent;
+                content = content.replace(/\{(\w+)\}/g, (placeholder, key) => {
+                    return key in data ? data[key] : '';
+                });
+                processedTemplate += content;
+            }
         }
         
         currentIndex = match.index + match[0].length;
@@ -455,6 +491,178 @@ function processTemplate(template, data) {
     });
     
     return processedTemplate;
+}
+
+// Helper function to find a component by key
+function findComponentWithKey(data, key) {
+    // Check if this is directly a component with this key
+    if (data[key] && data[key].isMulti !== undefined) {
+        return data[key];
+    }
+    
+    // Look for a component with this key
+    for (const dataKey in data) {
+        const item = data[dataKey];
+        if (item && typeof item === 'object' && item.key === key && item.isMulti !== undefined) {
+            return item;
+        }
+    }
+    
+    return null;
+}
+
+// Setup multi-input fields to have add/remove functionality
+function setupMultiInputFields(form) {
+    // Find all components with isMulti=true in the form schema
+    const multiComponents = findMultiComponents(form.form.components);
+    
+    multiComponents.forEach(component => {
+        // Get DOM element for this component
+        const componentElem = document.querySelector(`.formio-component-${component.key}`);
+        if (!componentElem) return;
+        
+        // Get the input container
+        const inputContainer = componentElem.querySelector('.input-group, .form-control');
+        if (!inputContainer) return;
+        
+        // Create a container for the multi-inputs
+        const multiContainer = document.createElement('div');
+        multiContainer.className = 'multi-input-container';
+        multiContainer.dataset.componentKey = component.key;
+        
+        // Move the existing input into this container
+        const inputParent = inputContainer.parentElement;
+        inputParent.appendChild(multiContainer);
+        multiContainer.appendChild(inputContainer.cloneNode(true));
+        
+        // Add a + button after the input
+        const addButton = document.createElement('button');
+        addButton.type = 'button';
+        addButton.className = 'btn btn-sm btn-success multi-input-add';
+        addButton.innerHTML = '<i class="bi bi-plus-circle"></i>';
+        addButton.dataset.componentKey = component.key;
+        addButton.title = 'Add another';
+        addButton.style.marginLeft = '5px';
+        
+        // Add the button after the input
+        multiContainer.appendChild(addButton);
+        
+        // Clear original input container
+        inputParent.removeChild(inputContainer);
+        
+        // Set up event listener for the add button
+        addButton.addEventListener('click', handleAddMultiInput);
+        
+        // Set initial values if they exist
+        if (component.defaultValue) {
+            const firstInput = multiContainer.querySelector('input, textarea');
+            if (firstInput) {
+                firstInput.value = component.defaultValue;
+            }
+        }
+    });
+}
+
+// Add new input field when + button is clicked
+function handleAddMultiInput(event) {
+    const componentKey = event.currentTarget.dataset.componentKey;
+    const multiContainer = event.currentTarget.closest('.multi-input-container');
+    
+    // Clone the first input
+    const firstInput = multiContainer.querySelector('input, textarea');
+    if (!firstInput) return;
+    
+    // Create a new row with the input and a remove button
+    const newRow = document.createElement('div');
+    newRow.className = 'multi-input-row';
+    newRow.style.display = 'flex';
+    newRow.style.marginTop = '5px';
+    
+    // Clone the input
+    const newInput = firstInput.cloneNode(true);
+    newInput.value = '';
+    newInput.className = firstInput.className + ' multi-value-input';
+    newInput.dataset.index = multiContainer.querySelectorAll('.multi-value-input, input, textarea').length;
+
+    // Create remove button
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'btn btn-sm btn-danger multi-input-remove';
+    removeButton.innerHTML = '<i class="bi bi-dash-circle"></i>';
+    removeButton.style.marginLeft = '5px';
+    removeButton.addEventListener('click', function() {
+        multiContainer.removeChild(newRow);
+        renumberMultiInputs(multiContainer);
+    });
+    
+    // Add to row
+    newRow.appendChild(newInput);
+    newRow.appendChild(removeButton);
+    
+    // Add to container before the add button
+    multiContainer.insertBefore(newRow, event.currentTarget);
+}
+
+// Renumber multi inputs after removing one
+function renumberMultiInputs(container) {
+    const inputs = container.querySelectorAll('.multi-value-input, input, textarea');
+    inputs.forEach((input, index) => {
+        input.dataset.index = index;
+    });
+}
+
+// Collect values from multi-input fields
+function collectMultiInputValues(data) {
+    // Find all multi-input containers
+    const multiContainers = document.querySelectorAll('.multi-input-container');
+    
+    multiContainers.forEach(container => {
+        const componentKey = container.dataset.componentKey;
+        const inputs = container.querySelectorAll('input, textarea');
+        
+        // Create an array of values
+        const values = [];
+        inputs.forEach(input => {
+            if (input.value.trim() !== '') {
+                values.push(input.value);
+            }
+        });
+        
+        // Store in the data
+        if (values.length > 0) {
+            data[componentKey] = { values: values, isMulti: true };
+        }
+    });
+}
+
+// Find components with isMulti=true
+function findMultiComponents(components) {
+    const multiComponents = [];
+    
+    if (!components) return multiComponents;
+    
+    const processComponent = (component) => {
+        if (component.isMulti === true) {
+            multiComponents.push(component);
+        }
+        
+        // Process nested components
+        if (component.components) {
+            component.components.forEach(processComponent);
+        }
+        
+        // Process columns
+        if (component.columns) {
+            component.columns.forEach(column => {
+                if (column.components) {
+                    column.components.forEach(processComponent);
+                }
+            });
+        }
+    };
+    
+    components.forEach(processComponent);
+    return multiComponents;
 }
 
 function trackFormUsage(isSubmission = false) {

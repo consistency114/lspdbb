@@ -17,6 +17,7 @@ $editMode = isset($_GET['edit_mode']) && $_GET['edit_mode'] === 'true';
 $formCreator = null;
 $formWidth = 45;
 $isOwnForm = false;
+$useBasicBuilder = isset($_GET['builder']) && $_GET['builder'] === 'basic';
 
 if (isset($_GET['f']) && !empty($_GET['f'])) {
     if(ENABLE_JSON_VIEW || auth()->hasRole('admin')) {
@@ -110,7 +111,39 @@ ob_start();
     </div>
     <?php endif; ?>
 
+    <?php if ($useBasicBuilder): ?>
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> <strong>Basic Builder:</strong> You are using the simplified form builder. For advanced features, use the standard builder.
+    </div>
+    <?php endif; ?>
+
+    <!-- If using basic builder, show the field type selection interface -->
+    <?php if ($useBasicBuilder): ?>
+    <div class="row">
+        <div class="input-selector-container col-xl-2 col-sm-3 col-12">
+            <h5 class="header">Field Types</h5>
+            <div class="input-selector">
+                <label class="mt-1"></label>
+                <div class="input-types">
+                    <div class="btn-col">
+                        <button type="button" class="btn btn-primary field-type" data-field-type="textfield">
+                            <i class="bi bi-type me-2"></i>
+                            <span class="d-block d-sm-none d-md-block">Single Line</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-10 col-sm-9 col-12 preview-container">
+            <h5 class="header">Preview</h5>
+            <form class="">
+                <ul style="padding: 0px;"></ul>
+            </form>
+        </div>
+    </div>
+    <?php else: ?>
     <div id='builder'></div>
+    <?php endif; ?>
 
     <div id='form-name-container' style="margin-top: 20px;">
         <h3>Form Name:</h3>
@@ -287,7 +320,7 @@ $GLOBALS['page_title'] = $editMode ? 'Edit Form' : 'Form Builder';
 
 // Page-specific settings
 $GLOBALS['page_settings'] = [
-    'formio_assets' => true,
+    'formio_assets' => !$useBasicBuilder, // Only load FormIO assets for the standard builder
 ];
 
 // Add page-specific CSS
@@ -304,6 +337,7 @@ $existingStyleJS = json_encode($existingFormStyle);
 $siteURL = site_url();
 $jsonURL = JSON_URL;
 $isEditModeJS = $editMode && $isOwnForm ? 'true' : 'false';
+$useBasicBuilder = $useBasicBuilder ? 'true' : 'false';
 $assets_base_path = asset_path('js/');
 
 // Add this inside your PHP file, before the closing body tag
@@ -320,22 +354,35 @@ let siteURL = "$siteURL";
 let jsonURL = "$jsonURL";
 let isEditMode = $isEditModeJS;
 let ASSETS_BASE_PATH = "$assets_base_path";
+let useBasicBuilder = $useBasicBuilder;
 JSVARS;
 
-// Add the component registry first, then builder.js
-$GLOBALS['page_javascript'] = '
-<!-- Component Registry System -->
-<script src="'. asset_path('js/components/components.js') .'?v=' . APP_VERSION . '"></script>
-
-<!-- Custom Form.io Editor Extensions -->
-<script src="'. asset_path('js/app/editor.js') .'?v=' . APP_VERSION . '"></script>
-
-<!-- Custom Script Functions - No Script Execution -->
-<script src="'. asset_path('js/app/custom.no.js') .'?v=' . APP_VERSION . '"></script>
-
-<!-- Main Builder Script - relies on ComponentRegistry -->
-<script src="'. asset_path('js/app/builder.js') .'?v=' . APP_VERSION . '"></script>
-';
+// Set up JavaScript based on builder mode
+if ($useBasicBuilder === 'true') {
+    // Basic builder - load only what's needed
+    $GLOBALS['page_javascript'] = '
+    <!-- Custom Script Functions -->
+    <script src="'. asset_path('js/app/custom.no.js') .'?v=' . APP_VERSION . '"></script>
+    
+    <!-- Basic Builder Script -->
+    <script src="'. asset_path('js/app/builder-basic.js') .'?v=' . APP_VERSION . '"></script>
+    ';
+} else {
+    // Standard FormIO builder
+    $GLOBALS['page_javascript'] = '
+    <!-- Component Registry System -->
+    <script src="'. asset_path('js/components/components.js') .'?v=' . APP_VERSION . '"></script>
+    
+    <!-- Custom Form.io Editor Extensions -->
+    <script src="'. asset_path('js/app/editor.js') .'?v=' . APP_VERSION . '"></script>
+    
+    <!-- Custom Script Functions - No Script Execution -->
+    <script src="'. asset_path('js/app/custom.no.js') .'?v=' . APP_VERSION . '"></script>
+    
+    <!-- Main Builder Script - relies on ComponentRegistry -->
+    <script src="'. asset_path('js/app/builder.js') .'?v=' . APP_VERSION . '"></script>
+    ';
+}
 
 // Include the master layout
 require_once ROOT_DIR . '/includes/master.php';
