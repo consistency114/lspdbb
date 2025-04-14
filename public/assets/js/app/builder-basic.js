@@ -1,7 +1,7 @@
 /**
  * builder-basic.js - Simplified Form Builder
  * 
- * Fixed version with submit button always at the end of the form
+ * Enhanced version with field removal and drag-and-drop reordering capabilities
  */
 
 (function() {
@@ -94,37 +94,35 @@
         }
     }
 
-
     // Function to open the field configuration modal
     function openFieldModal(fieldType, existingField = null) {
         // Create modal backdrop
         const backdrop = document.createElement('div');
         backdrop.className = 'modal-backdrop fade show';
         document.body.appendChild(backdrop);
-
+    
         // Create modal container
         const modalContainer = document.createElement('div');
         modalContainer.className = 'modal fade show';
         modalContainer.style.display = 'block';
         modalContainer.style.paddingRight = '15px';
         document.body.appendChild(modalContainer);
-
+    
         // Create modal dialog
         const modalDialog = document.createElement('div');
         modalDialog.className = 'modal-dialog';
         modalContainer.appendChild(modalDialog);
-
+    
         // Field type label
-        let fieldTypeLabel = 'Single Line';
-        if (fieldType === 'textarea') fieldTypeLabel = 'Multi Line';
-        if (fieldType === 'multilines') fieldTypeLabel = 'Multiple Lines';
+        let fieldTypeLabel = 'Text Field';
+        if (fieldType === 'textarea') fieldTypeLabel = 'Text Area';
+        if (fieldType === 'select') fieldTypeLabel = 'Dropdown';
+        if (fieldType === 'checkbox') fieldTypeLabel = 'Checkbox';
         if (fieldType === 'datetime') fieldTypeLabel = 'Date & Time';
         if (fieldType === 'date') fieldTypeLabel = 'Date';
         if (fieldType === 'time') fieldTypeLabel = 'Time';
-        if (fieldType === 'select') fieldTypeLabel = 'Dropdown';
-        if (fieldType === 'checkbox') fieldTypeLabel = 'Checkbox';
-        if (fieldType === 'url') fieldTypeLabel = 'Hyperlink';
-
+        if (fieldType === 'url') fieldTypeLabel = 'URL';
+    
         // Prepare select options HTML if it's a select field
         let selectOptionsHtml = '';
         if (fieldType === 'select') {
@@ -147,7 +145,32 @@
                 </div>
             `;
         }
-
+    
+        // Prepare checkbox values HTML if it's a checkbox field
+        let checkboxValuesHtml = '';
+        if (fieldType === 'checkbox') {
+            checkboxValuesHtml = `
+                <div class="form-group mt-3">
+                    <label class="form-label" style="display: flex; align-items: center;">
+                        Values
+                        <span class="ms-2" style="cursor: help;" title="Define what values to use when the checkbox is checked or unchecked">
+                            <i class="bi bi-question-circle text-muted"></i>
+                        </span>
+                    </label>
+                    <div class="row g-2">
+                        <div class="col">
+                            <label class="form-label small">Checked Value</label>
+                            <input type="text" class="form-control" id="checkbox-true-value" value="${existingField && existingField.trueValue ? existingField.trueValue : 'true'}">
+                        </div>
+                        <div class="col">
+                            <label class="form-label small">Unchecked Value</label>
+                            <input type="text" class="form-control" id="checkbox-false-value" value="${existingField && existingField.falseValue ? existingField.falseValue : 'false'}">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    
         // Create modal content
         const modalContent = document.createElement('div');
         modalContent.className = 'modal-content';
@@ -196,7 +219,16 @@
                         </label>
                         <input autocomplete="off" type="text" class="form-control" id="field-default" value="${existingField && existingField.defaultValue ? existingField.defaultValue : ''}" style="padding-right: 2.5rem;">
                     </div>
+                    ${fieldType === 'checkbox' ? `
+                    <div class="form-group mt-3">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" id="default-checked" class="form-check-input" ${existingField && existingField.defaultValue === (existingField.trueValue || 'true') ? 'checked' : ''}>
+                            <label class="form-check-label" for="default-checked">Checked by default</label>
+                        </div>
+                    </div>
+                    ` : ''}
                     ${selectOptionsHtml}
+                    ${checkboxValuesHtml}
                 </form>
             </div>
             <div class="modal-footer">
@@ -205,13 +237,13 @@
             </div>
         `;
         modalDialog.appendChild(modalContent);
-
+    
         // Handle cancel button
         const cancelButton = modalContent.querySelector('#cancel-field');
         cancelButton.addEventListener('click', function() {
             closeModal(modalContainer, backdrop);
         });
-
+    
         // Set up select options if this is a select field
         if (fieldType === 'select') {
             const optionsList = modalContent.querySelector('#select-options-list');
@@ -266,28 +298,28 @@
                 addOptionRow('Option 2', 'option2');
             }
         }
-
+    
         // Handle add/update button
         const addButton = modalContent.querySelector('#add-field');
         addButton.addEventListener('click', function() {
             const nameInput = modalContent.querySelector('#field-name');
             const descriptionInput = modalContent.querySelector('#field-description');
             const defaultInput = modalContent.querySelector('#field-default');
-
+    
             // Basic validation
             if (!nameInput.value.trim()) {
                 nameInput.classList.add('is-invalid');
                 return;
             }
-
+    
             // Get multi options if applicable
             let isMulti = false;
-
+    
             if (fieldType === 'textfield' || fieldType === 'textarea') {
                 const multiCheckbox = modalContent.querySelector('#isMulti');
                 isMulti = multiCheckbox?.checked || false;
             }
-
+    
             // Prepare component data - IMPORTANT: Keep the original field type!
             const componentData = {
                 type: fieldType, // Keep the original field type
@@ -301,7 +333,21 @@
                 isMulti: isMulti, // Just store the multi flag
                 values: existingField?.values || [] // For storing multiple values
             };
-
+    
+            // For checkbox, get the true/false values
+            if (fieldType === 'checkbox') {
+                const trueValueInput = modalContent.querySelector('#checkbox-true-value');
+                const falseValueInput = modalContent.querySelector('#checkbox-false-value');
+                const defaultCheckedInput = modalContent.querySelector('#default-checked');
+                
+                componentData.trueValue = trueValueInput.value || 'true';
+                componentData.falseValue = falseValueInput.value || 'false';
+                
+                // Set default value based on the checkbox state
+                componentData.defaultValue = defaultCheckedInput.checked ? 
+                    componentData.trueValue : componentData.falseValue;
+            }
+    
             // If it's a select field, gather options
             if (fieldType === 'select') {
                 const optionRows = modalContent.querySelectorAll('.select-option-row');
@@ -327,7 +373,7 @@
                 // Set placeholder text
                 componentData.placeholder = 'Select an option';
             }
-
+    
             // If updating an existing field
             if (existingField) {
                 // Find and update the field in formState
@@ -335,20 +381,20 @@
                 if (index !== -1) {
                     formState.components[index] = componentData;
                 }
-
+    
                 // Update the preview
                 updateFieldPreview(componentData, existingField.id);
             } else {
                 // Add the field to formState
                 formState.components.push(componentData);
-
+    
                 // Add to the preview
                 addFieldToPreview(componentData);
             }
-
+    
             // Close the modal
             closeModal(modalContainer, backdrop);
-
+    
             // Update wildcards
             updateWildcards();
         });
@@ -437,7 +483,7 @@
         // Base HTML structure for the field
         let inputHtml = createInputHtml(field, 0);
 
-        // --- MODIFICATION START: Added pt-4 to button column for vertical alignment ---
+        // --- MODIFICATION START: Added delete button and modified button layout ---
         fieldItem.innerHTML = `
             <div class="col"> <div class="form-group">
                     <label class="form-label mb-1"> <span style="font-weight: bold;">${field.label}</span>
@@ -448,14 +494,19 @@
                     </div>
                 </div>
             </div>
-            <div class="col-auto d-flex align-items-center pt-4"> <button type="button" class="btn btn-sm btn-outline-warning edit-field me-2" data-field-id="${field.id}"> <i class="bi bi-pencil-square"></i>
+            <div class="col-auto d-flex align-items-center pt-4"> 
+                <button type="button" class="btn btn-sm btn-outline-warning edit-field me-2" data-field-id="${field.id}"> 
+                    <i class="bi bi-pencil-square"></i>
                 </button>
-                <div class="drag-handle" style="cursor: grab; color: var(--bs-secondary);"> <i class="bi bi-grip-vertical"></i>
+                <button type="button" class="btn btn-sm btn-outline-danger delete-field me-2" data-field-id="${field.id}"> 
+                    <i class="bi bi-trash"></i>
+                </button>
+                <div class="drag-handle" style="cursor: grab; color: var(--bs-secondary);"> 
+                    <i class="bi bi-grip-vertical"></i>
                 </div>
             </div>
         `;
         // --- MODIFICATION END ---
-
 
         // Add the field to the form
         formItemsList.appendChild(fieldItem);
@@ -469,6 +520,14 @@
                 openFieldModal(field.type, field);
             }
         });
+
+        // --- MODIFICATION START: Add event listener to delete button ---
+        const deleteButton = fieldItem.querySelector('.delete-field');
+        deleteButton.addEventListener('click', function() {
+            const fieldId = this.dataset.fieldId;
+            removeField(fieldId);
+        });
+        // --- MODIFICATION END ---
 
         // Add event listeners for the Add/Remove buttons if this is a multi field
         if (field.isMulti) {
@@ -492,11 +551,37 @@
         }
     }
 
+    // --- MODIFICATION START: Add function to remove a field ---
+    function removeField(fieldId) {
+        // Remove from DOM
+        const fieldItem = document.querySelector(`.preview-input-component[data-field-id="${fieldId}"]`);
+        if (fieldItem) {
+            // Optional: Add a simple fade-out animation before removal
+            fieldItem.style.transition = 'opacity 0.3s';
+            fieldItem.style.opacity = '0';
+            
+            // Remove after transition
+            setTimeout(() => {
+                formItemsList.removeChild(fieldItem);
+            }, 300);
+        }
+        
+        // Remove from formState
+        const index = formState.components.findIndex(c => c.id === fieldId);
+        if (index !== -1) {
+            formState.components.splice(index, 1);
+        }
+        
+        // Update wildcards
+        setTimeout(updateWildcards, 300); // Wait for animation to complete
+    }
+    // --- MODIFICATION END ---
+
     // Helper to create input HTML
     function createInputHtml(field, index, value = '', isRemovable = false) {
         const inputId = `{{${field.key}_input_${index}}}`;
         const fieldValue = value || (index === 0 ? field.defaultValue : '');
-
+    
         let addRemoveButton = '';
         if (field.isMulti) {
             if (isRemovable) {
@@ -515,7 +600,7 @@
                 `;
             }
         }
-
+    
         // Different input types based on field type
         if (field.type === 'textarea') {
             return `
@@ -553,11 +638,67 @@
                     </div>
                 </div>
             `;
+        } else if (field.type === 'checkbox') {
+            const isChecked = fieldValue === (field.trueValue || 'true');
+            
+            return `
+                <div class="input-group mb-2" data-index="${index}">
+                    <div class="input-group-text">
+                        <input type="checkbox" id="${inputId}" class="form-check-input" ${isChecked ? 'checked' : ''} 
+                            data-true-value="${field.trueValue || 'true'}" 
+                            data-false-value="${field.falseValue || 'false'}">
+                    </div>
+                    <div class="form-control d-flex justify-content-between">
+                        <span class="checkbox-value-indicator">${isChecked ? (field.trueValue || 'true') : (field.falseValue || 'false')}</span>
+                    </div>
+                    <div class="input-group-append">
+                        ${addRemoveButton}
+                    </div>
+                </div>
+            `;
+        } else if (field.type === 'datetime') {
+            return `
+                <div class="input-group mb-2" data-index="${index}">
+                    <input type="datetime-local" id="${inputId}" class="form-control" value="${fieldValue}">
+                    <div class="input-group-append">
+                        ${addRemoveButton}
+                    </div>
+                </div>
+            `;
+        } else if (field.type === 'date') {
+            return `
+                <div class="input-group mb-2" data-index="${index}">
+                    <input type="date" id="${inputId}" class="form-control" value="${fieldValue}">
+                    <div class="input-group-append">
+                        ${addRemoveButton}
+                    </div>
+                </div>
+            `;
+        } else if (field.type === 'time') {
+            return `
+                <div class="input-group mb-2" data-index="${index}">
+                    <input type="time" id="${inputId}" class="form-control" value="${fieldValue}">
+                    <div class="input-group-append">
+                        ${addRemoveButton}
+                    </div>
+                </div>
+            `;
+        } else if (field.type === 'url') {
+            return `
+                <div class="input-group mb-2" data-index="${index}">
+                    <span class="input-group-text">
+                        <i class="bi bi-link"></i>
+                    </span>
+                    <input type="url" id="${inputId}" class="form-control" value="${fieldValue}" placeholder="https://example.com">
+                    <div class="input-group-append">
+                        ${addRemoveButton}
+                    </div>
+                </div>
+            `;
         } else {
             return `
                 <div class="input-group mb-2" data-index="${index}">
-                    <input autocomplete="off" type="${field.type === 'url' ? 'url' : 'text'}"
-                           id="${inputId}" class="form-control" value="${fieldValue}">
+                    <input type="text" id="${inputId}" class="form-control" value="${fieldValue}">
                     <div class="input-group-append">
                         ${addRemoveButton}
                     </div>
@@ -769,12 +910,71 @@
                 </select>
                 ${buttonHtml}
             `;
-        } else {
+        } else if (field.type === 'checkbox') {
+            const isChecked = value === (field.trueValue || 'true');
+            
             inputGroup.innerHTML = `
-                <input autocomplete="off" type="${field.type === 'url' ? 'url' : 'text'}"
-                       id="${inputId}" class="form-control" value="${value}">
+                <div class="input-group-text">
+                    <input type="checkbox" id="${inputId}" class="form-check-input" ${isChecked ? 'checked' : ''} 
+                        data-true-value="${field.trueValue || 'true'}" 
+                        data-false-value="${field.falseValue || 'false'}">
+                </div>
+                <div class="form-control d-flex justify-content-between">
+                    <span class="checkbox-value-indicator">${isChecked ? (field.trueValue || 'true') : (field.falseValue || 'false')}</span>
+                </div>
                 ${buttonHtml}
             `;
+            
+            // Add event listener to update the value indicator
+            const checkboxInput = inputGroup.querySelector('input[type="checkbox"]');
+            const valueIndicator = inputGroup.querySelector('.checkbox-value-indicator');
+            
+            checkboxInput.addEventListener('change', function() {
+                valueIndicator.textContent = this.checked ? 
+                    (this.dataset.trueValue || 'true') : 
+                    (this.dataset.falseValue || 'false');
+            });
+        } else if (field.type === 'datetime') {
+            inputGroup.innerHTML = `
+                <input type="datetime-local" id="${inputId}" class="form-control" value="${value}">
+                ${buttonHtml}
+            `;
+        } else if (field.type === 'date') {
+            inputGroup.innerHTML = `
+                <input type="date" id="${inputId}" class="form-control" value="${value}">
+                ${buttonHtml}
+            `;
+        } else if (field.type === 'time') {
+            inputGroup.innerHTML = `
+                <input type="time" id="${inputId}" class="form-control" value="${value}">
+                ${buttonHtml}
+            `;
+        } else if (field.type === 'url') {
+            inputGroup.innerHTML = `
+                <span class="input-group-text">
+                    <i class="bi bi-link"></i>
+                </span>
+                <input type="url" id="${inputId}" class="form-control" value="${value}" placeholder="https://example.com">
+                ${buttonHtml}
+            `;
+        } else {
+            inputGroup.innerHTML = `
+                <input type="text" id="${inputId}" class="form-control" value="${value}">
+                ${buttonHtml}
+            `;
+        }
+        
+        // Re-attach event listeners
+        if (field.isMulti) {
+            const addBtn = inputGroup.querySelector('.add-field');
+            if (addBtn) {
+                addBtn.addEventListener('click', handleAddField);
+            }
+            
+            const removeBtn = inputGroup.querySelector('.remove-field');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', handleRemoveField);
+            }
         }
     }
 
@@ -938,6 +1138,158 @@
         return wildcards;
     }
 
+    // --- MODIFICATION START: Add drag-and-drop reordering functionality ---
+    function initializeDragAndDrop() {
+        // First, check if SortableJS is available (we'll use this library if it exists)
+        if (typeof Sortable !== 'undefined') {
+            // Use SortableJS for drag-and-drop functionality
+            initializeWithSortableJS();
+        } else {
+            // Fallback to HTML5 drag and drop API
+            initializeWithHTML5DragAndDrop();
+        }
+    }
+
+    function initializeWithSortableJS() {
+        // Initialize Sortable on the form items list
+        Sortable.create(formItemsList, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            onEnd: function(evt) {
+                // Update the formState.components array to match the new order
+                updateComponentsOrder();
+            }
+        });
+    }
+
+    function initializeWithHTML5DragAndDrop() {
+        // If SortableJS is not available, use HTML5 Drag and Drop API
+        const fieldItems = formItemsList.querySelectorAll('.preview-input-component');
+        
+        // Add draggable attributes and event listeners to each field
+        fieldItems.forEach(item => {
+            setupDraggableField(item);
+        });
+        
+        // Make the container a drop target
+        formItemsList.addEventListener('dragover', function(e) {
+            e.preventDefault(); // Allow dropping
+            const afterElement = getDragAfterElement(this, e.clientY);
+            const draggable = document.querySelector('.dragging');
+            
+            if (afterElement == null) {
+                this.appendChild(draggable);
+            } else {
+                this.insertBefore(draggable, afterElement);
+            }
+        });
+        
+        formItemsList.addEventListener('dragend', function(e) {
+            // Update the formState.components array to match the new order
+            updateComponentsOrder();
+        });
+    }
+    
+    // Helper function to make a field draggable
+    function setupDraggableField(item) {
+        item.setAttribute('draggable', true);
+        
+        const dragHandle = item.querySelector('.drag-handle');
+        
+        // Only start drag when clicking on the drag handle
+        if (dragHandle) {
+            dragHandle.addEventListener('mousedown', function() {
+                item.setAttribute('draggable', true);
+            });
+            
+            item.addEventListener('mouseup', function() {
+                item.setAttribute('draggable', false);
+            });
+        }
+        
+        item.addEventListener('dragstart', function(e) {
+            this.classList.add('dragging');
+            // Set a ghost drag image (optional)
+            const ghostElement = this.cloneNode(true);
+            ghostElement.style.position = 'absolute';
+            ghostElement.style.opacity = '0.5';
+            ghostElement.style.top = '-1000px';
+            document.body.appendChild(ghostElement);
+            e.dataTransfer.setDragImage(ghostElement, 0, 0);
+            setTimeout(() => {
+                document.body.removeChild(ghostElement);
+            }, 0);
+        });
+        
+        item.addEventListener('dragend', function() {
+            this.classList.remove('dragging');
+        });
+    }
+    
+    // Get the element after which to drop the draggable element
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.preview-input-component:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+    
+    // Update the components array to match the new DOM order
+    function updateComponentsOrder() {
+        // Get the current order of fields in the DOM
+        const fieldItems = formItemsList.querySelectorAll('.preview-input-component');
+        const newOrder = [];
+        
+        // Create a new array of components in the current DOM order
+        fieldItems.forEach(item => {
+            const fieldId = item.dataset.fieldId;
+            const component = formState.components.find(c => c.id === fieldId);
+            if (component) {
+                newOrder.push(component);
+            }
+        });
+        
+        // Get the submit button if it exists
+        const submitButton = formState.components.find(c => c.type === 'button' && c.action === 'submit');
+        
+        // Update formState.components with the new order
+        formState.components = newOrder;
+        
+        // Add the submit button back at the end if it existed
+        if (submitButton) {
+            formState.components.push(submitButton);
+        }
+        
+        // Update wildcards after reordering
+        updateWildcards();
+    }
+    
+    // Function to set up any newly added fields as draggable
+    function setupNewField(field) {
+        const fieldItem = document.querySelector(`.preview-input-component[data-field-id="${field.id}"]`);
+        if (fieldItem) {
+            setupDraggableField(fieldItem);
+        }
+    }
+    
+    // Override addFieldToPreview to setup draggable behavior for new fields
+    const originalAddFieldToPreview = addFieldToPreview;
+    addFieldToPreview = function(field) {
+        originalAddFieldToPreview(field);
+        setupNewField(field);
+    };
+    // --- MODIFICATION END ---
+
     // Initialize form builder
     function init() {
         // Only set up the field type buttons if we're using the basic builder
@@ -946,6 +1298,10 @@
 
             // Add the fixed submit button
             addSubmitButtonToForm();
+            
+            // --- MODIFICATION START: Initialize drag and drop functionality ---
+            initializeDragAndDrop();
+            // --- MODIFICATION END ---
         }
 
         // Set up template input listener
@@ -1011,19 +1367,26 @@
             if (component.type === 'button' && component.action === 'submit') {
                 return;
             }
-
+    
             if (component.isMulti) {
                 // Find all inputs for this component
                 const fieldContainer = document.querySelector(`.field-inputs[data-field-key="${component.key}"]`);
                 if (!fieldContainer) return;
-
+    
                 const inputGroups = fieldContainer.querySelectorAll('.input-group');
                 component.values = [];
-
+    
                 inputGroups.forEach((group, idx) => {
                     const input = group.querySelector('input, textarea, select');
                     if (input) {
-                        component.values[idx] = input.value;
+                        if (input.type === 'checkbox') {
+                            // For checkboxes, use the appropriate true/false value
+                            component.values[idx] = input.checked ? 
+                                input.dataset.trueValue || 'true' : 
+                                input.dataset.falseValue || 'false';
+                        } else {
+                            component.values[idx] = input.value;
+                        }
                     }
                 });
             }
@@ -1129,6 +1492,17 @@
             alert('An error occurred while saving the form. Please try again.');
         });
     }
+
+    document.addEventListener('change', function(event) {
+        if (event.target.type === 'checkbox' && event.target.dataset.trueValue) {
+            const valueIndicator = event.target.closest('.input-group').querySelector('.checkbox-value-indicator');
+            if (valueIndicator) {
+                valueIndicator.textContent = event.target.checked ? 
+                    event.target.dataset.trueValue : 
+                    event.target.dataset.falseValue;
+            }
+        }
+    });
 
     // Expose the form state and functions
     window.BasicFormBuilder = {

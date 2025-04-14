@@ -135,14 +135,30 @@ ob_start();
                         <i class="bi bi-type me-2"></i>
                         <span class="d-block d-sm-none d-md-block">Text Field</span>
                     </button>
-                     <button type="button" class="field-type" data-field-type="textarea">
-                         <i class="bi bi-textarea-t me-2"></i>
-                         <span class="d-block d-sm-none d-md-block">Text Area</span>
-                     </button>
-                     <button type="button" class="field-type" data-field-type="select">
-                         <i class="bi bi-menu-button-wide me-2"></i>
-                         <span class="d-block d-sm-none d-md-block">Dropdown</span>
-                     </button>
+                    <button type="button" class="field-type" data-field-type="textarea">
+                        <i class="bi bi-textarea-t me-2"></i>
+                        <span class="d-block d-sm-none d-md-block">Text Area</span>
+                    </button>
+                    <button type="button" class="field-type" data-field-type="select">
+                        <i class="bi bi-menu-button-wide me-2"></i>
+                        <span class="d-block d-sm-none d-md-block">Dropdown</span>
+                    </button>
+                    <button type="button" class="field-type" data-field-type="checkbox">
+                        <i class="bi bi-check-square me-2"></i>
+                        <span class="d-block d-sm-none d-md-block">Checkbox</span>
+                    </button>
+                    <button type="button" class="field-type" data-field-type="datetime">
+                        <i class="bi bi-calendar-date-fill me-2"></i>
+                        <span class="d-block d-sm-none d-md-block">Date & Time</span>
+                    </button>
+                    <button type="button" class="field-type" data-field-type="time">
+                        <i class="bi bi-clock me-2"></i>
+                        <span class="d-block d-sm-none d-md-block">Time</span>
+                    </button>
+                    <button type="button" class="field-type" data-field-type="url">
+                        <i class="bi bi-link me-2"></i>
+                        <span class="d-block d-sm-none d-md-block">URL</span>
+                    </button>
                 </div>
             </div>
         </div>
