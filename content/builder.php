@@ -121,10 +121,7 @@ ob_start();
 
     <?php if ($useBasicBuilder): ?>
     <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> <strong>Basic Builder:</strong> You are using the simplified form builder. For advanced features, use the <a href="?builder=standard">standard builder</a>.
-    </div>
-    <div class="alert alert-warning">
-        <i class="bi bi-info-circle"></i> <strong>Early Build:</strong> This feature is in it's early stages, you might encounter bugs or even potential data loss.
+        <i class="bi bi-info-circle"></i> <strong>Basic Builder:</strong> You are using the simplified form builder. For advanced features, use the <a href="?builder=standard">standard builder</a>. Note that the basic builder is in it's early stages, you may encounter bugs.
     </div>
     <?php endif; ?>
 

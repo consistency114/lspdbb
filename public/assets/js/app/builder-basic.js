@@ -1,5 +1,7 @@
 /**
  * builder-basic.js - Simplified Form Builder
+ * 
+ * Fixed version with submit button always at the end of the form
  */
 
 (function() {
@@ -372,6 +374,12 @@
 
     // Function to add a submit button to the form
     function addSubmitButtonToForm() {
+        // First, remove any existing submit button container
+        const existingSubmitButton = document.querySelector('.submit-button-container');
+        if (existingSubmitButton) {
+            existingSubmitButton.remove();
+        }
+    
         // Create a submit button element
         const submitButtonContainer = document.createElement('div');
         submitButtonContainer.className = 'submit-button-container mt-4 mb-2 text-center';
@@ -381,11 +389,22 @@
             </button>
             <div class="small text-muted mt-1">This submit button is automatically added to all forms.</div>
         `;
-
+    
         // Add it after the list of form items
         formItemsList.parentNode.appendChild(submitButtonContainer);
+    
+        // Remove any existing submit button from the components array
+        formState.components = formState.components.filter(c => !(c.type === 'button' && c.action === 'submit'));
+        
+        // We won't add the submit button to formState.components here
+        // It will be added just before saving the form
+    }
 
-        // Create the submit button component data
+    function ensureSubmitButtonIsLast() {
+        // Remove any existing submit button
+        formState.components = formState.components.filter(c => !(c.type === 'button' && c.action === 'submit'));
+        
+        // Create the submit button component
         const submitButtonComponent = {
             type: 'button',
             label: 'Submit',
@@ -395,14 +414,11 @@
             id: 'submit_button',
             input: true,
             tableView: false,
-            isSubmitButton: true  // Special flag to identify it as the submit button
+            isSubmitButton: true
         };
-
-        // Make sure we only add the submit button if it doesn't already exist
-        const existingSubmitButton = formState.components.find(c => c.type === 'button' && c.action === 'submit');
-        if (!existingSubmitButton) {
-            formState.components.push(submitButtonComponent);
-        }
+        
+        // Add it to the end of the array
+        formState.components.push(submitButtonComponent);
     }
 
     // Function to add a field to the preview
@@ -486,14 +502,14 @@
             if (isRemovable) {
                 // Remove button for additional fields
                 addRemoveButton = `
-                    <button type="button" class="btn btn-sm btn-danger remove-field" data-field-key="${field.key}" data-index="${index}">
+                    <button type="button" class="btn btn-sm btn-danger remove-field" data-field-key="${field.key}" data-index="${index}" style="${field.type === 'textarea' ? 'height: 100%;' : ''}">
                         <i class="bi bi-dash-circle"></i>
                     </button>
                 `;
             } else {
                 // Add button for the first field
                 addRemoveButton = `
-                    <button type="button" class="btn btn-sm btn-success add-field" data-field-key="${field.key}">
+                    <button type="button" class="btn btn-sm btn-success add-field" data-field-key="${field.key}" style="${field.type === 'textarea' ? 'height: 100%;' : ''}">
                         <i class="bi bi-plus-circle"></i>
                     </button>
                 `;
@@ -503,9 +519,9 @@
         // Different input types based on field type
         if (field.type === 'textarea') {
             return `
-                <div class="input-group mb-2" data-index="${index}">
+                <div class="input-group mb-2" data-index="${index}" style="flex-wrap: nowrap;">
                     <textarea autocomplete="off" id="${inputId}" class="form-control" rows="3">${fieldValue}</textarea>
-                    <div class="input-group-append">
+                    <div class="input-group-append" style="display: flex;">
                         ${addRemoveButton}
                     </div>
                 </div>
@@ -695,21 +711,23 @@
         const index = parseInt(inputGroup.dataset.index || 0);
         const value = input.value || field.values?.[index] || '';
         
-        // Get the add/remove button HTML
+        // Get the add/remove button HTML with appropriate styling for textareas
         let buttonHtml = '';
         if (field.isMulti) {
+            const buttonStyle = field.type === 'textarea' ? ' style="height: 100%;"' : '';
+            
             if (index === 0) {
                 buttonHtml = `
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-sm btn-success add-field" data-field-key="${field.key}">
+                    <div class="input-group-append" style="${field.type === 'textarea' ? 'display: flex;' : ''}">
+                        <button type="button" class="btn btn-sm btn-success add-field" data-field-key="${field.key}"${buttonStyle}>
                             <i class="bi bi-plus-circle"></i>
                         </button>
                     </div>
                 `;
             } else {
                 buttonHtml = `
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-sm btn-danger remove-field" data-field-key="${field.key}" data-index="${index}">
+                    <div class="input-group-append" style="${field.type === 'textarea' ? 'display: flex;' : ''}">
+                        <button type="button" class="btn btn-sm btn-danger remove-field" data-field-key="${field.key}" data-index="${index}"${buttonStyle}>
                             <i class="bi bi-dash-circle"></i>
                         </button>
                     </div>
@@ -721,6 +739,9 @@
         const inputId = `{{${field.key}_input_${index}}}`;
         
         if (field.type === 'textarea') {
+            // Set flex-wrap: nowrap to prevent button wrapping below the textarea
+            inputGroup.style.flexWrap = 'nowrap';
+            
             inputGroup.innerHTML = `
                 <textarea autocomplete="off" id="${inputId}" class="form-control" rows="3">${value}</textarea>
                 ${buttonHtml}
@@ -788,14 +809,53 @@
             copyBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const text = this.dataset.clipboard;
-                navigator.clipboard.writeText(text).then(() => {
-                    // Show success indicator
-                    const originalIcon = this.innerHTML;
-                    this.innerHTML = '<i class="bi bi-check-lg"></i>';
-                    setTimeout(() => {
-                        this.innerHTML = originalIcon;
-                    }, 1000);
-                });
+                
+                // Cross-browser clipboard copy function
+                function copyToClipboard(text) {
+                    // Modern approach - Clipboard API (not supported in all browsers)
+                    if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                        return navigator.clipboard.writeText(text);
+                    }
+                    
+                    // Fallback approach - Create a temporary element and copy from it
+                    return new Promise((resolve, reject) => {
+                        try {
+                            const textarea = document.createElement('textarea');
+                            textarea.value = text;
+                            textarea.style.position = 'fixed';  // Avoid scrolling to bottom
+                            textarea.style.opacity = '0';
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            
+                            // Execute the copy command
+                            const successful = document.execCommand('copy');
+                            document.body.removeChild(textarea);
+                            
+                            if (successful) {
+                                resolve();
+                            } else {
+                                reject(new Error('Unable to copy'));
+                            }
+                        } catch (err) {
+                            reject(err);
+                        }
+                    });
+                }
+                
+                // Use the helper function with proper error handling
+                copyToClipboard(text)
+                    .then(() => {
+                        // Show success indicator
+                        const originalIcon = this.innerHTML;
+                        this.innerHTML = '<i class="bi bi-check-lg"></i>';
+                        setTimeout(() => {
+                            this.innerHTML = originalIcon;
+                        }, 1000);
+                    })
+                    .catch(err => {
+                        console.error('Copy failed:', err);
+                        alert('Could not copy to clipboard. Please try selecting and copying manually.');
+                    });
             });
 
             wildcardList.appendChild(wildcardElem);
@@ -869,13 +929,6 @@
 
                 // IMPORTANT: Also add the field key itself as a wildcard to use within the START/END block
                 wildcards.push(component.key);
-
-                // Also add some numbered keys for convenience within blocks
-                /*
-                wildcards.push(`${component.key}_value`);
-                wildcards.push(`${component.key}_index`);
-                wildcards.push(`${component.key}_count`);
-                */
             } else {
                 // For regular components, just add the key
                 wildcards.push(component.key);
@@ -982,6 +1035,9 @@
         // Collect current field values before saving
         collectFieldValues();
 
+        // Ensure submit button is the last component
+        ensureSubmitButtonIsLast();
+
         // Get form data
         const formNameInput = document.getElementById('formName');
         const templateInput = document.getElementById('formTemplate');
@@ -1056,7 +1112,7 @@
                 formId = formId.split(/[\/\\]/).pop();
             }
 
-            const shareUrl = window.siteURL + `form?f=${formId}`;
+            const shareUrl = siteURL + `form?f=${formId}`;
 
             // Update UI with success info
             const shareableLink = document.getElementById('shareable-link');

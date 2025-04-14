@@ -512,6 +512,7 @@ function findComponentWithKey(data, key) {
 }
 
 // Setup multi-input fields to have add/remove functionality
+// Setup multi-input fields to have add/remove functionality
 function setupMultiInputFields(form) {
     // Find all components with isMulti=true in the form schema
     const multiComponents = findMultiComponents(form.form.components);
@@ -533,19 +534,25 @@ function setupMultiInputFields(form) {
         // Move the existing input into this container
         const inputParent = inputContainer.parentElement;
         inputParent.appendChild(multiContainer);
-        multiContainer.appendChild(inputContainer.cloneNode(true));
         
-        // Add a + button after the input
+        // Create an input-group wrapper for the first input
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'input-group mb-2';
+        multiContainer.appendChild(inputGroup);
+        
+        // Add the input to the input-group
+        inputGroup.appendChild(inputContainer.cloneNode(true));
+        
+        // Add a + button inside the input-group
         const addButton = document.createElement('button');
         addButton.type = 'button';
         addButton.className = 'btn btn-sm btn-success multi-input-add';
         addButton.innerHTML = '<i class="bi bi-plus-circle"></i>';
         addButton.dataset.componentKey = component.key;
         addButton.title = 'Add another';
-        addButton.style.marginLeft = '5px';
         
-        // Add the button after the input
-        multiContainer.appendChild(addButton);
+        // Add the button directly inside the input-group
+        inputGroup.appendChild(addButton);
         
         // Clear original input container
         inputParent.removeChild(inputContainer);
@@ -572,35 +579,41 @@ function handleAddMultiInput(event) {
     const firstInput = multiContainer.querySelector('input, textarea');
     if (!firstInput) return;
     
-    // Create a new row with the input and a remove button
-    const newRow = document.createElement('div');
-    newRow.className = 'multi-input-row';
-    newRow.style.display = 'flex';
-    newRow.style.marginTop = '5px';
+    // Get the number of existing inputs
+    const inputCount = multiContainer.querySelectorAll('.multi-value-input, input, textarea').length;
+    
+    // Create a new input group for the row
+    const newInputGroup = document.createElement('div');
+    newInputGroup.className = 'input-group mb-2';
+    newInputGroup.dataset.index = inputCount;
     
     // Clone the input
     const newInput = firstInput.cloneNode(true);
     newInput.value = '';
     newInput.className = firstInput.className + ' multi-value-input';
-    newInput.dataset.index = multiContainer.querySelectorAll('.multi-value-input, input, textarea').length;
+    newInput.dataset.index = inputCount;
 
     // Create remove button
     const removeButton = document.createElement('button');
     removeButton.type = 'button';
     removeButton.className = 'btn btn-sm btn-danger multi-input-remove';
     removeButton.innerHTML = '<i class="bi bi-dash-circle"></i>';
-    removeButton.style.marginLeft = '5px';
+    removeButton.dataset.componentKey = componentKey;
+    removeButton.dataset.index = inputCount;
     removeButton.addEventListener('click', function() {
-        multiContainer.removeChild(newRow);
+        multiContainer.removeChild(newInputGroup);
         renumberMultiInputs(multiContainer);
     });
     
-    // Add to row
-    newRow.appendChild(newInput);
-    newRow.appendChild(removeButton);
+    // Add input and button to the input group
+    newInputGroup.appendChild(newInput);
+    newInputGroup.appendChild(removeButton);
     
-    // Add to container before the add button
-    multiContainer.insertBefore(newRow, event.currentTarget);
+    // Find the add button's input group
+    const addButtonGroup = event.currentTarget.closest('.input-group');
+    
+    // Add the new input group before the add button's input group
+    multiContainer.insertBefore(newInputGroup, addButtonGroup);
 }
 
 // Renumber multi inputs after removing one
