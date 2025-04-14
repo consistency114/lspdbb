@@ -1,7 +1,7 @@
 <?php
 /**
  * reBB - Builder
- * 
+ *
  * This file serves as the renderer for the form builder.
  */
 
@@ -31,14 +31,14 @@ if (isset($_GET['f']) && !empty($_GET['f'])) {
                 $existingSchema = json_encode($formData['schema']);
                 $existingFormName = isset($formData['formName']) ? $formData['formName'] : '';
                 $existingTemplate = isset($formData['template']) ? $formData['template'] : '';
-                $existingTemplateTitle = isset($formData['templateTitle']) ? $formData['templateTitle'] : ''; 
+                $existingTemplateTitle = isset($formData['templateTitle']) ? $formData['templateTitle'] : '';
                 $existingTemplateLink = isset($formData['templateLink']) ? $formData['templateLink'] : '';
                 $enableTemplateTitle = isset($formData['enableTemplateTitle']) ? $formData['enableTemplateTitle'] : false;
                 $enableTemplateLink = isset($formData['enableTemplateLink']) ? $formData['enableTemplateLink'] : false;
                 $existingFormStyle = isset($formData['formStyle']) ? $formData['formStyle'] : 'default';
                 $formWidth = isset($formData['formWidth']) ? $formData['formWidth'] : 45;
                 $formCreator = isset($formData['createdBy']) ? $formData['createdBy'] : null;
-                
+
                 // Check if the current user is the creator of this form
                 if (auth()->isLoggedIn()) {
                     $currentUser = auth()->getUser();
@@ -117,33 +117,32 @@ ob_start();
     </div>
     <?php endif; ?>
 
-    <!-- If using basic builder, show the field type selection interface -->
-    <?php if ($useBasicBuilder): ?>
     <div class="row">
-        <div class="input-selector-container col-xl-2 col-sm-3 col-12">
-            <h5 class="header">Field Types</h5>
+        <?php if ($useBasicBuilder): ?>
+        <div class="col-xl-2 col-sm-3 col-12 input-selector-container mb-3"> <h5 class="header mb-2">Field Types</h5>
             <div class="input-selector">
-                <label class="mt-1"></label>
                 <div class="input-types">
                     <div class="btn-col">
-                        <button type="button" class="btn btn-primary field-type" data-field-type="textfield">
+                        <button type="button" class="field-type" data-field-type="textfield">
                             <i class="bi bi-type me-2"></i>
                             <span class="d-block d-sm-none d-md-block">Single Line</span>
                         </button>
                     </div>
-                </div>
+                    </div>
             </div>
         </div>
         <div class="col-xl-10 col-sm-9 col-12 preview-container">
-            <h5 class="header">Preview</h5>
+            <h5 class="header mb-2">Preview</h5>
             <form class="">
-                <ul style="padding: 0px;"></ul>
+                <ul style="padding: 0px; list-style-type: none;"></ul>
             </form>
         </div>
+        <?php else: ?>
+        <div class="col-12">
+            <div id='builder'></div>
+        </div>
+        <?php endif; ?>
     </div>
-    <?php else: ?>
-    <div id='builder'></div>
-    <?php endif; ?>
 
     <div id='form-name-container' style="margin-top: 20px;">
         <h3>Form Name:</h3>
@@ -156,7 +155,7 @@ ob_start();
         <?php
         foreach ($formStyles as $style) {?>
             <label class="style-option" for="<?php echo $style['id']; ?>">
-                <input class="form-check-input" type="radio" name="formStyle" 
+                <input class="form-check-input" type="radio" name="formStyle"
                        id="<?php echo $style['id']; ?>" value="<?php echo $style['value']; ?>">
                 <span class="form-check-label"><?php echo $style['label']; ?></span>
                 <div class="style-tooltip">
@@ -164,7 +163,7 @@ ob_start();
                     <div class="tooltip-content">
                         <p><?php echo $style['description']; ?></p>
                         <div class="tooltip-image">
-                            <img src="<?php echo asset_path('images/form-types/' . $style['value'] . '.png'); ?>" 
+                            <img src="<?php echo asset_path('images/form-types/' . $style['value'] . '.png'); ?>"
                                  alt="<?php echo $style['label']; ?> style preview">
                         </div>
                     </div>
@@ -186,11 +185,9 @@ ob_start();
                     placeholder='Paste your BBCode / HTML / Template here, use the wildcards above, example: [b]Name:[/b] {NAME_ABC1}.'><?php echo htmlspecialchars($existingTemplate); ?></textarea>
     </div>
 
-        <!-- New Template Title and Link Fields with Toggles -->
         <div id='template-extra-container' style="margin-top: 20px;">
         <h3>Additional Form Options:</h3>
 
-        <!-- Custom Form Width Slider -->
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
@@ -206,18 +203,17 @@ ob_start();
             <div class="card-body">
                 <small class="form-text text-muted d-block mb-2">Set the maximum width for your form (default: 45%)</small>
                 <div class="d-flex align-items-center">
-                    <input type="range" class="form-range me-2" id="formWidthSlider" 
+                    <input type="range" class="form-range me-2" id="formWidthSlider"
                         min="20" max="100" step="5" value="<?php echo $formWidth; ?>">
                     <div class="input-group" style="width: 120px;">
-                        <input type="number" class="form-control" id="formWidthInput" 
+                        <input type="number" class="form-control" id="formWidthInput"
                             min="20" max="100" step="5" value="<?php echo $formWidth; ?>">
                         <span class="input-group-text">%</span>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Template Title Toggle & Section -->
+
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
@@ -227,27 +223,26 @@ ob_start();
                         <div class="tooltip-content">
                             <p>The Dynamic Title Field allows you to generate custom titles for your form. You can use wildcards to create dynamic and flexible title templates.</p>
                             <div class="tooltip-image">
-                                <img src="<?php echo asset_path('images/form-options/dynamic-title.png'); ?>" 
-                                    alt="Dynamic Title Field preview">
+                                <img src="<?php echo asset_path('images/form-options/dynamic-title.png'); ?>"
+                                     alt="Dynamic Title Field preview">
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="templateTitleToggle" 
+                    <input class="form-check-input" type="checkbox" id="templateTitleToggle"
                         <?php echo $enableTemplateTitle ? 'checked' : ''; ?>>
                     <label class="form-check-label" for="templateTitleToggle">Enable</label>
                 </div>
             </div>
             <div class="card-body" id="templateTitleSection" style="<?php echo $enableTemplateTitle ? '' : 'display: none;'; ?>">
                 <small class="form-text text-muted d-block mb-2">Offer generated titles for users to copy and paste a title into their generated form.</small>
-                <input type='text' id='templateTitle' class='form-control' 
-                       placeholder='Generally used to create dynamic topic names' 
+                <input type='text' id='templateTitle' class='form-control'
+                       placeholder='Generally used to create dynamic topic names'
                        value="<?php echo htmlspecialchars($existingTemplateTitle); ?>">
             </div>
         </div>
-        
-        <!-- Template Link Toggle & Section -->
+
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
@@ -257,22 +252,22 @@ ob_start();
                             <div class="tooltip-content">
                                 <p>Offers a link to users as to where they can submit their generated content.</p>
                                 <div class="tooltip-image">
-                                    <img src="<?php echo asset_path('images/form-options/post-content.png'); ?>" 
-                                        alt="Dynamic Title Field preview">
+                                    <img src="<?php echo asset_path('images/form-options/post-content.png'); ?>"
+                                         alt="Dynamic Title Field preview">
                                 </div>
                             </div>
                         </div>
                     </div>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="templateLinkToggle" 
+                            <input class="form-check-input" type="checkbox" id="templateLinkToggle"
                                 <?php echo $enableTemplateLink ? 'checked' : ''; ?>>
                             <label class="form-check-label" for="templateLinkToggle">Enable</label>
                         </div>
                     </div>
                     <div class="card-body" id="templateLinkSection" style="<?php echo $enableTemplateLink ? '' : 'display: none;'; ?>">
                         <small class="form-text text-muted d-block mb-2">Offer users a link to post their generated content, you <b>cannot</b> use wildcards.</small>
-                        <input type='text' id='templateLink' class='form-control' 
-                            placeholder='Generally used to offer the user a link as to where to post the generated content' 
+                        <input type='text' id='templateLink' class='form-control'
+                            placeholder='Generally used to offer the user a link as to where to post the generated content'
                             value="<?php echo htmlspecialchars($existingTemplateLink); ?>">
                     </div>
                 </div>
@@ -295,8 +290,7 @@ ob_start();
         </a>
     </div>
 
-    <div id="success-message" class="alert alert-success mt-3">
-        <?php if ($editMode && $isOwnForm): ?>
+    <div id="success-message" class="alert alert-success mt-3" style="display: none;"> <?php if ($editMode && $isOwnForm): ?>
             <p>Form updated successfully!</p>
             <a id="shareable-link" class="text-primary" target="_blank"></a>
         <?php else: ?>
@@ -325,6 +319,9 @@ $GLOBALS['page_settings'] = [
 
 // Add page-specific CSS
 $GLOBALS['page_css'] = '<link rel="stylesheet" href="'. asset_path('css/pages/builder.css') .'?v=' . APP_VERSION . '">';
+if($useBasicBuilder) {
+    $GLOBALS['page_css'] .= '<link rel="stylesheet" href="'. asset_path('css/pages/builder-basic.css') .'?v=' . APP_VERSION . '">';
+}
 
 // Add page-specific JavaScript
 $existingSchema = $existingSchema ? $existingSchema : 'null';
@@ -337,7 +334,7 @@ $existingStyleJS = json_encode($existingFormStyle);
 $siteURL = site_url();
 $jsonURL = JSON_URL;
 $isEditModeJS = $editMode && $isOwnForm ? 'true' : 'false';
-$useBasicBuilder = $useBasicBuilder ? 'true' : 'false';
+$useBasicBuilderJS = $useBasicBuilder ? 'true' : 'false';
 $assets_base_path = asset_path('js/');
 
 // Add this inside your PHP file, before the closing body tag
@@ -354,32 +351,26 @@ let siteURL = "$siteURL";
 let jsonURL = "$jsonURL";
 let isEditMode = $isEditModeJS;
 let ASSETS_BASE_PATH = "$assets_base_path";
-let useBasicBuilder = $useBasicBuilder;
+let useBasicBuilder = $useBasicBuilderJS;
 JSVARS;
 
 // Set up JavaScript based on builder mode
-if ($useBasicBuilder === 'true') {
+if ($useBasicBuilder) { // Check the boolean variable directly
     // Basic builder - load only what's needed
     $GLOBALS['page_javascript'] = '
-    <!-- Custom Script Functions -->
     <script src="'. asset_path('js/app/custom.no.js') .'?v=' . APP_VERSION . '"></script>
-    
-    <!-- Basic Builder Script -->
+
     <script src="'. asset_path('js/app/builder-basic.js') .'?v=' . APP_VERSION . '"></script>
     ';
 } else {
     // Standard FormIO builder
     $GLOBALS['page_javascript'] = '
-    <!-- Component Registry System -->
     <script src="'. asset_path('js/components/components.js') .'?v=' . APP_VERSION . '"></script>
-    
-    <!-- Custom Form.io Editor Extensions -->
+
     <script src="'. asset_path('js/app/editor.js') .'?v=' . APP_VERSION . '"></script>
-    
-    <!-- Custom Script Functions - No Script Execution -->
+
     <script src="'. asset_path('js/app/custom.no.js') .'?v=' . APP_VERSION . '"></script>
-    
-    <!-- Main Builder Script - relies on ComponentRegistry -->
+
     <script src="'. asset_path('js/app/builder.js') .'?v=' . APP_VERSION . '"></script>
     ';
 }
