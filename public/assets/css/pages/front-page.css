@@ -8,10 +8,42 @@
     min-height: 100vh;
     width: 100%;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 2rem 1rem;
+    padding: 0;
     overflow: hidden;
+}
+
+/* Header with login button */
+.landing-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    z-index: 5;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.auth-button .btn {
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.auth-button .btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.auth-button .btn i {
+    margin-right: 5px;
 }
 
 /* Animated gradient background */
@@ -45,12 +77,13 @@
 .landing-container {
     display: flex;
     max-width: 1200px;
-    width: 100%;
+    width: 90%;
     background-color: rgba(255, 255, 255, 0.9);
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     position: relative;
+    margin-top: 40px;
 }
 
 /* Version badge */
@@ -64,18 +97,6 @@
     font-size: 0.75rem;
     border-radius: 20px;
     z-index: 1;
-}
-
-/* Remove login button from original location */
-.landing-info .login-button {
-    display: none;
-}
-
-.landing-actions .login-button {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    z-index: 2;
 }
 
 /* Left side - Info section */
@@ -155,7 +176,6 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    position: relative; /* Add this for absolute positioning context */
 }
 
 .actions-card {
@@ -164,25 +184,71 @@
 
 .landing-actions h2 {
     font-size: 1.75rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     text-align: center;
     color: #333;
+}
+
+.builder-options {
+    margin-bottom: 1.5rem;
+}
+
+.builder-option h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    color: #555;
+    text-align: center;
+}
+
+.builder-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.builder-buttons .btn-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.builder-buttons .btn-action i {
+    font-size: 1.2rem;
+    margin-bottom: 0.3rem;
+}
+
+.builder-buttons .btn-action small {
+    opacity: 0.7;
+    font-size: 0.75rem;
+    margin-top: 0.15rem;
 }
 
 .btn-action {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    margin-bottom: 1rem;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    margin-bottom: 0.8rem;
     width: 100%;
-    border-radius: 50px;
+    border-radius: 8px;
     transition: all 0.3s ease;
 }
 
 .btn-action i {
     margin-right: 0.75rem;
+}
+
+.btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* Hash input container */
@@ -204,7 +270,7 @@
 
 .hash-input-container .form-control {
     margin-bottom: 1rem;
-    border-radius: 50px;
+    border-radius: 10px;
     padding: 0.6rem 1rem;
 }
 
@@ -263,13 +329,25 @@ body.dark-mode .landing-actions {
     background-color: rgba(20, 20, 20, 0.7);
 }
 
-body.dark-mode .landing-actions h2 {
+body.dark-mode .landing-actions h2,
+body.dark-mode .builder-option h3 {
     color: #e0e0e0;
 }
 
 body.dark-mode .gradient-background {
     background: linear-gradient(-45deg, #303f9f, #0d47a1, #006064, #1b5e20);
     opacity: 0.6;
+}
+
+body.dark-mode .auth-button .btn {
+    background-color: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .auth-button .btn:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 body.dark-mode .hash-input-container {

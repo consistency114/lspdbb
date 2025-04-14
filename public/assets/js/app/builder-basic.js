@@ -19,7 +19,7 @@
 
     // Check if we're using the basic builder via query parameter
     const urlParams = new URLSearchParams(window.location.search);
-    const isBasicBuilder = urlParams.get('builder') === 'basic' || (typeof window.useBasicBuilder !== 'undefined' && window.useBasicBuilder);
+    const isBasicBuilder = urlParams.get('b') === 'basic' || (typeof window.useBasicBuilder !== 'undefined' && window.useBasicBuilder);
 
     // State to track the form being built
     let formState = {

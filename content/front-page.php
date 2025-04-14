@@ -13,6 +13,23 @@ ob_start();
     <!-- Animated gradient background -->
     <div class="gradient-background"></div>
     
+    <!-- Header with login/account button -->
+    <div class="landing-header">
+        <?php if (ENABLE_AUTH): ?>
+            <div class="auth-button">
+                <?php if (!auth()->isLoggedIn()): ?>
+                <a href="<?php echo site_url('login'); ?>" class="btn btn-outline-light">
+                    <i class="bi bi-person"></i> Login
+                </a>
+                <?php else: ?>
+                <a href="<?php echo site_url('profile'); ?>" class="btn btn-outline-light">
+                    <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars(auth()->getUser()['username']); ?>
+                </a>
+                <?php endif ?>
+            </div>
+        <?php endif; ?>
+    </div>
+    
     <div class="landing-container">
         <!-- Version badge -->
         <div class="version-badge"><?php echo APP_VERSION; ?></div>
@@ -44,13 +61,23 @@ ob_start();
             <div class="actions-card">
                 <h2>Get Started</h2>
                 
-                <button id="createFormBtn" class="btn btn-primary btn-action">
-                    <i class="bi bi-plus-circle"></i> Create a form
-                </button>
-                
-                <button id="useFormBtn" class="btn btn-secondary btn-action">
-                    <i class="bi bi-box-arrow-in-right"></i> Use a form
-                </button>
+                <!-- Builder options -->
+                <div class="builder-options">
+                    <div class="builder-option">
+                        <h3>Create a Form</h3>
+                        <div class="builder-buttons">
+                            <a href="<?php echo site_url('builder'); ?>" class="btn btn-primary btn-action">
+                                <i class="bi bi-tools"></i> Standard Builder
+                                <small>Full-featured form builder</small>
+                            </a>
+                            
+                            <a href="<?php echo site_url('builder?b=basic'); ?>" class="btn btn-outline-primary btn-action">
+                                <i class="bi bi-pencil-square"></i> Basic Builder
+                                <small>Simplified building experience</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 
                 <div id="hashInputContainer" class="hash-input-container">
                     <div class="form-group">
@@ -78,21 +105,6 @@ ob_start();
                         <i class="bi bi-moon"></i> Dark Mode
                     </a>
                 </div>
-
-                <!-- Login button -->
-                <?php if (ENABLE_AUTH): ?>
-                    <div class="login-button">
-                        <?php if (!auth()->isLoggedIn()): ?>
-                        <a href="<?php echo site_url('login'); ?>" class="btn btn-outline-primary">
-                            <i class="bi bi-person"></i> Login
-                        </a>
-                        <?php else: ?>
-                        <a href="<?php echo site_url('profile'); ?>" class="btn btn-outline-primary">
-                            <i class="bi bi-person"></i> <?php echo htmlspecialchars(auth()->getUser()['username']); ?>
-                        </a>
-                        <?php endif ?>
-                    </div>
-                <?php endif; ?>
             </div>
         </div>
     </div>

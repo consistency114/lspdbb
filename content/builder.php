@@ -17,7 +17,7 @@ $editMode = isset($_GET['edit_mode']) && $_GET['edit_mode'] === 'true';
 $formCreator = null;
 $formWidth = 45;
 $isOwnForm = false;
-$useBasicBuilder = isset($_GET['builder']) && $_GET['builder'] === 'basic';
+$useBasicBuilder = isset($_GET['b']) && $_GET['b'] === 'basic';
 
 if (isset($_GET['f']) && !empty($_GET['f'])) {
     // Allow JSON view only if enabled or user is admin
