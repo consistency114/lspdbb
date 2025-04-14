@@ -123,6 +123,29 @@
         if (fieldType === 'checkbox') fieldTypeLabel = 'Checkbox';
         if (fieldType === 'url') fieldTypeLabel = 'Hyperlink';
 
+        // Prepare select options HTML if it's a select field
+        let selectOptionsHtml = '';
+        if (fieldType === 'select') {
+            selectOptionsHtml = `
+                <div class="form-group mt-3">
+                    <label class="form-label" style="display: flex; align-items: center;">
+                        Options
+                        <span class="ms-2" style="cursor: help;" title="Add options for your dropdown menu">
+                            <i class="bi bi-question-circle text-muted"></i>
+                        </span>
+                    </label>
+                    <div id="select-options-container" class="border rounded p-3 mb-2">
+                        <div id="select-options-list">
+                            <!-- Options will be inserted here -->
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary mt-2" id="add-select-option">
+                            <i class="bi bi-plus-circle me-1"></i> Add Option
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
         // Create modal content
         const modalContent = document.createElement('div');
         modalContent.className = 'modal-content';
@@ -171,6 +194,7 @@
                         </label>
                         <input autocomplete="off" type="text" class="form-control" id="field-default" value="${existingField && existingField.defaultValue ? existingField.defaultValue : ''}" style="padding-right: 2.5rem;">
                     </div>
+                    ${selectOptionsHtml}
                 </form>
             </div>
             <div class="modal-footer">
@@ -185,6 +209,61 @@
         cancelButton.addEventListener('click', function() {
             closeModal(modalContainer, backdrop);
         });
+
+        // Set up select options if this is a select field
+        if (fieldType === 'select') {
+            const optionsList = modalContent.querySelector('#select-options-list');
+            const addOptionButton = modalContent.querySelector('#add-select-option');
+            
+            // Function to add an option row
+            function addOptionRow(label = '', value = '') {
+                const optionId = Date.now() + Math.floor(Math.random() * 1000);
+                const optionRow = document.createElement('div');
+                optionRow.className = 'select-option-row d-flex align-items-center mb-2';
+                optionRow.dataset.optionId = optionId;
+                
+                optionRow.innerHTML = `
+                    <div class="col me-2">
+                        <input type="text" class="form-control form-control-sm option-label" placeholder="Label" value="${label}">
+                    </div>
+                    <div class="col me-2">
+                        <input type="text" class="form-control form-control-sm option-value" placeholder="Value" value="${value}">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger remove-option">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                `;
+                
+                // Add remove button event listener
+                const removeButton = optionRow.querySelector('.remove-option');
+                removeButton.addEventListener('click', function() {
+                    optionRow.remove();
+                });
+                
+                optionsList.appendChild(optionRow);
+            }
+            
+            // Add event listener for adding new options
+            addOptionButton.addEventListener('click', function() {
+                addOptionRow();
+            });
+            
+            // If editing an existing select field, populate its options
+            if (existingField && existingField.data && existingField.data.values) {
+                existingField.data.values.forEach(option => {
+                    // Handle different option formats
+                    if (typeof option === 'object' && option.label && option.value !== undefined) {
+                        addOptionRow(option.label, option.value);
+                    } else if (typeof option === 'string') {
+                        addOptionRow(option, option);
+                    }
+                });
+            } else {
+                // Add a couple of empty option rows for new select fields
+                addOptionRow('Option 1', 'option1');
+                addOptionRow('Option 2', 'option2');
+            }
+        }
 
         // Handle add/update button
         const addButton = modalContent.querySelector('#add-field');
@@ -220,6 +299,32 @@
                 isMulti: isMulti, // Just store the multi flag
                 values: existingField?.values || [] // For storing multiple values
             };
+
+            // If it's a select field, gather options
+            if (fieldType === 'select') {
+                const optionRows = modalContent.querySelectorAll('.select-option-row');
+                const options = [];
+                
+                optionRows.forEach(row => {
+                    const labelInput = row.querySelector('.option-label');
+                    const valueInput = row.querySelector('.option-value');
+                    
+                    if (labelInput && valueInput && (labelInput.value.trim() || valueInput.value.trim())) {
+                        options.push({
+                            label: labelInput.value.trim(),
+                            value: valueInput.value.trim() || labelInput.value.trim()
+                        });
+                    }
+                });
+                
+                // Add the options to the component data
+                componentData.data = {
+                    values: options
+                };
+                
+                // Set placeholder text
+                componentData.placeholder = 'Select an option';
+            }
 
             // If updating an existing field
             if (existingField) {
@@ -405,6 +510,33 @@
                     </div>
                 </div>
             `;
+        } else if (field.type === 'select') {
+            // Create select options
+            const options = field.data?.values || [];
+            let optionsHtml = '';
+            
+            // Add placeholder option
+            optionsHtml += `<option value="" ${!fieldValue ? 'selected' : ''}>Select an option</option>`;
+            
+            // Add each option
+            options.forEach(option => {
+                const optionValue = typeof option === 'object' ? option.value : option;
+                const optionLabel = typeof option === 'object' ? option.label : option;
+                const isSelected = fieldValue === optionValue;
+                
+                optionsHtml += `<option value="${optionValue}" ${isSelected ? 'selected' : ''}>${optionLabel}</option>`;
+            });
+            
+            return `
+                <div class="input-group mb-2" data-index="${index}">
+                    <select id="${inputId}" class="form-control">
+                        ${optionsHtml}
+                    </select>
+                    <div class="input-group-append">
+                        ${addRemoveButton}
+                    </div>
+                </div>
+            `;
         } else {
             return `
                 <div class="input-group mb-2" data-index="${index}">
@@ -491,7 +623,7 @@
             input.dataset.index = idx;
 
             // Update the input ID
-            const fieldInput = input.querySelector('input, textarea');
+            const fieldInput = input.querySelector('input, textarea, select');
             if (fieldInput) {
                 fieldInput.id = `{{${fieldKey}_input_${idx}}}`;
             }
@@ -545,7 +677,7 @@
         setupMultiButtons(fieldItem, field);
 
         // Update input types if needed
-        const inputs = fieldInputs.querySelectorAll('input, textarea');
+        const inputs = fieldInputs.querySelectorAll('input, textarea, select');
         inputs.forEach(input => {
             updateInputType(input, field);
         });
@@ -554,32 +686,74 @@
     // Helper function to update input type
     function updateInputType(input, field) {
         const inputGroup = input.closest('.input-group');
-
-        const shouldBeTextarea = field.type === 'textarea';
-        const isCurrentlyTextarea = input.tagName === 'TEXTAREA';
-
-        if (shouldBeTextarea !== isCurrentlyTextarea) {
-            if (shouldBeTextarea) {
-                const textarea = document.createElement('textarea');
-                textarea.autocomplete = 'off';
-                textarea.id = input.id;
-                textarea.className = input.className;
-                textarea.value = input.value;
-                textarea.style = input.style;
-                textarea.rows = 3;
-
-                inputGroup.replaceChild(textarea, input);
+        
+        if (!inputGroup) return;
+        
+        // Completely rebuild the input based on field type
+        inputGroup.innerHTML = '';
+        
+        const index = parseInt(inputGroup.dataset.index || 0);
+        const value = input.value || field.values?.[index] || '';
+        
+        // Get the add/remove button HTML
+        let buttonHtml = '';
+        if (field.isMulti) {
+            if (index === 0) {
+                buttonHtml = `
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-sm btn-success add-field" data-field-key="${field.key}">
+                            <i class="bi bi-plus-circle"></i>
+                        </button>
+                    </div>
+                `;
             } else {
-                const newInput = document.createElement('input');
-                newInput.type = field.type === 'url' ? 'url' : 'text';
-                newInput.autocomplete = 'off';
-                newInput.id = input.id;
-                newInput.className = input.className;
-                newInput.value = input.value;
-                newInput.style = input.style;
-
-                inputGroup.replaceChild(newInput, input);
+                buttonHtml = `
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-sm btn-danger remove-field" data-field-key="${field.key}" data-index="${index}">
+                            <i class="bi bi-dash-circle"></i>
+                        </button>
+                    </div>
+                `;
             }
+        }
+        
+        // Create the appropriate input based on field type
+        const inputId = `{{${field.key}_input_${index}}}`;
+        
+        if (field.type === 'textarea') {
+            inputGroup.innerHTML = `
+                <textarea autocomplete="off" id="${inputId}" class="form-control" rows="3">${value}</textarea>
+                ${buttonHtml}
+            `;
+        } else if (field.type === 'select') {
+            // Create select options
+            const options = field.data?.values || [];
+            let optionsHtml = '';
+            
+            // Add placeholder option
+            optionsHtml += `<option value="" ${!value ? 'selected' : ''}>Select an option</option>`;
+            
+            // Add each option
+            options.forEach(option => {
+                const optionValue = typeof option === 'object' ? option.value : option;
+                const optionLabel = typeof option === 'object' ? option.label : option;
+                const isSelected = value === optionValue;
+                
+                optionsHtml += `<option value="${optionValue}" ${isSelected ? 'selected' : ''}>${optionLabel}</option>`;
+            });
+            
+            inputGroup.innerHTML = `
+                <select id="${inputId}" class="form-control">
+                    ${optionsHtml}
+                </select>
+                ${buttonHtml}
+            `;
+        } else {
+            inputGroup.innerHTML = `
+                <input autocomplete="off" type="${field.type === 'url' ? 'url' : 'text'}"
+                       id="${inputId}" class="form-control" value="${value}">
+                ${buttonHtml}
+            `;
         }
     }
 
@@ -794,7 +968,7 @@
                 component.values = [];
 
                 inputGroups.forEach((group, idx) => {
-                    const input = group.querySelector('input, textarea');
+                    const input = group.querySelector('input, textarea, select');
                     if (input) {
                         component.values[idx] = input.value;
                     }

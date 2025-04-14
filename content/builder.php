@@ -20,7 +20,8 @@ $isOwnForm = false;
 $useBasicBuilder = isset($_GET['builder']) && $_GET['builder'] === 'basic';
 
 if (isset($_GET['f']) && !empty($_GET['f'])) {
-    if(ENABLE_JSON_VIEW || auth()->hasRole('admin')) {
+    // Allow JSON view only if enabled or user is admin
+    if(ENABLE_JSON_VIEW || (function_exists('auth') && auth()->hasRole('admin'))) {
         $formId = $_GET['f'];
         $filename = STORAGE_DIR . '/forms/' . $formId . '_schema.json';
 
@@ -28,7 +29,14 @@ if (isset($_GET['f']) && !empty($_GET['f'])) {
             $fileContent = file_get_contents($filename);
             $formData = json_decode($fileContent, true);
             if ($formData && isset($formData['schema'])) {
-                $existingSchema = json_encode($formData['schema']);
+                // Ensure schema is valid JSON before encoding
+                if (is_array($formData['schema']) || is_object($formData['schema'])) {
+                     $existingSchema = json_encode($formData['schema']);
+                } else {
+                    // Handle cases where schema might not be valid JSON - set to null or empty object
+                    $existingSchema = 'null';
+                    error_log("Warning: Invalid schema data found for form ID: " . $formId);
+                }
                 $existingFormName = isset($formData['formName']) ? $formData['formName'] : '';
                 $existingTemplate = isset($formData['template']) ? $formData['template'] : '';
                 $existingTemplateTitle = isset($formData['templateTitle']) ? $formData['templateTitle'] : '';
@@ -40,7 +48,7 @@ if (isset($_GET['f']) && !empty($_GET['f'])) {
                 $formCreator = isset($formData['createdBy']) ? $formData['createdBy'] : null;
 
                 // Check if the current user is the creator of this form
-                if (auth()->isLoggedIn()) {
+                if (function_exists('auth') && auth()->isLoggedIn()) {
                     $currentUser = auth()->getUser();
                     $isOwnForm = ($formCreator === $currentUser['_id'] || $currentUser['role'] === 'admin');
                 }
@@ -113,29 +121,39 @@ ob_start();
 
     <?php if ($useBasicBuilder): ?>
     <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> <strong>Basic Builder:</strong> You are using the simplified form builder. For advanced features, use the standard builder.
+        <i class="bi bi-info-circle"></i> <strong>Basic Builder:</strong> You are using the simplified form builder. For advanced features, use the <a href="?builder=standard">standard builder</a>.
+    </div>
+    <div class="alert alert-warning">
+        <i class="bi bi-info-circle"></i> <strong>Early Build:</strong> This feature is in it's early stages, you might encounter bugs or even potential data loss.
     </div>
     <?php endif; ?>
 
     <div class="row">
         <?php if ($useBasicBuilder): ?>
-        <div class="col-xl-2 col-sm-3 col-12 input-selector-container mb-3"> <h5 class="header mb-2">Field Types</h5>
+        <div class="col-xl-2 col-sm-3 col-12 input-selector-container mb-3">
+            <h5 class="header mb-2">Field Types</h5>
             <div class="input-selector">
                 <div class="input-types">
-                    <div class="btn-col">
-                        <button type="button" class="field-type" data-field-type="textfield">
-                            <i class="bi bi-type me-2"></i>
-                            <span class="d-block d-sm-none d-md-block">Single Line</span>
-                        </button>
-                    </div>
-                    </div>
+                    <button type="button" class="field-type" data-field-type="textfield">
+                        <i class="bi bi-type me-2"></i>
+                        <span class="d-block d-sm-none d-md-block">Text Field</span>
+                    </button>
+                     <button type="button" class="field-type" data-field-type="textarea">
+                         <i class="bi bi-textarea-t me-2"></i>
+                         <span class="d-block d-sm-none d-md-block">Text Area</span>
+                     </button>
+                     <button type="button" class="field-type" data-field-type="select">
+                         <i class="bi bi-menu-button-wide me-2"></i>
+                         <span class="d-block d-sm-none d-md-block">Dropdown</span>
+                     </button>
+                </div>
             </div>
         </div>
         <div class="col-xl-10 col-sm-9 col-12 preview-container">
-            <h5 class="header mb-2">Preview</h5>
+            <h5 class="header mb-2">Form Preview</h5>
             <form class="">
                 <ul style="padding: 0px; list-style-type: none;"></ul>
-            </form>
+                 </form>
         </div>
         <?php else: ?>
         <div class="col-12">
@@ -156,7 +174,8 @@ ob_start();
         foreach ($formStyles as $style) {?>
             <label class="style-option" for="<?php echo $style['id']; ?>">
                 <input class="form-check-input" type="radio" name="formStyle"
-                       id="<?php echo $style['id']; ?>" value="<?php echo $style['value']; ?>">
+                       id="<?php echo $style['id']; ?>" value="<?php echo $style['value']; ?>"
+                       <?php echo ($existingFormStyle === $style['value'] || (!$existingFormStyle && $style['default'])) ? 'checked' : ''; ?>>
                 <span class="form-check-label"><?php echo $style['label']; ?></span>
                 <div class="style-tooltip">
                     <i class="bi bi-info-circle"></i>
@@ -179,6 +198,9 @@ ob_start();
         <div id='wildcard-container'>
             <h3>Available Wildcards:</h3>
             <div id='wildcard-list'></div>
+             <div id="dataset-help-text" class="alert alert-info mt-2" style="display: none;">
+                 <small><strong>Note:</strong> Dataset wildcards (highlighted in red) must be included in your template before saving. They define where repeating content will appear.</small>
+             </div>
         </div>
         <h3>Form Template:</h3>
         <textarea id='formTemplate' class='form-control' rows='5'
@@ -324,10 +346,10 @@ if($useBasicBuilder) {
 }
 
 // Add page-specific JavaScript
-$existingSchema = $existingSchema ? $existingSchema : 'null';
-$existingTemplate = json_encode($existingTemplate, JSON_UNESCAPED_SLASHES);
-$existingTemplateTitle = json_encode($existingTemplateTitle, JSON_UNESCAPED_SLASHES);
-$existingTemplateLink = json_encode($existingTemplateLink, JSON_UNESCAPED_SLASHES);
+$existingSchemaJS = $existingSchema ? $existingSchema : 'null'; // Use JS null if no schema
+$existingTemplateJS = json_encode($existingTemplate, JSON_UNESCAPED_SLASHES);
+$existingTemplateTitleJS = json_encode($existingTemplateTitle, JSON_UNESCAPED_SLASHES);
+$existingTemplateLinkJS = json_encode($existingTemplateLink, JSON_UNESCAPED_SLASHES);
 $enableTemplateTitleJS = $enableTemplateTitle ? 'true' : 'false';
 $enableTemplateLinkJS = $enableTemplateLink ? 'true' : 'false';
 $existingStyleJS = json_encode($existingFormStyle);
@@ -339,11 +361,11 @@ $assets_base_path = asset_path('js/');
 
 // Add this inside your PHP file, before the closing body tag
 $GLOBALS['page_js_vars'] = <<<JSVARS
-let existingFormData = $existingSchema;
+let existingFormData = $existingSchemaJS;
 let existingFormNamePHP = "$existingFormName";
-let existingTemplatePHP = $existingTemplate;
-let existingTemplateTitlePHP = $existingTemplateTitle;
-let existingTemplateLinkPHP = $existingTemplateLink;
+let existingTemplatePHP = $existingTemplateJS;
+let existingTemplateTitlePHP = $existingTemplateTitleJS;
+let existingTemplateLinkPHP = $existingTemplateLinkJS;
 let enableTemplateTitlePHP = $enableTemplateTitleJS;
 let enableTemplateLinkPHP = $enableTemplateLinkJS;
 let existingFormStyle = $existingStyleJS;
