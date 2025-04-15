@@ -160,11 +160,11 @@
                     <div class="row g-2">
                         <div class="col">
                             <label class="form-label small">Checked Value</label>
-                            <input type="text" class="form-control" id="checkbox-true-value" value="${existingField && existingField.trueValue ? existingField.trueValue : 'true'}">
+                            <input type="text" class="form-control" id="checkbox-positive-value" value="${existingField && (existingField.positiveValue || existingField.trueValue) ? (existingField.positiveValue || existingField.trueValue) : 'true'}">
                         </div>
                         <div class="col">
                             <label class="form-label small">Unchecked Value</label>
-                            <input type="text" class="form-control" id="checkbox-false-value" value="${existingField && existingField.falseValue ? existingField.falseValue : 'false'}">
+                            <input type="text" class="form-control" id="checkbox-negative-value" value="${existingField && (existingField.negativeValue || existingField.falseValue) ? (existingField.negativeValue || existingField.falseValue) : 'false'}">
                         </div>
                     </div>
                 </div>
@@ -221,8 +221,8 @@
                     </div>
                     ${fieldType === 'checkbox' ? `
                     <div class="form-group mt-3">
-                        <div class="form-check form-switch">
-                            <input type="checkbox" id="default-checked" class="form-check-input" ${existingField && existingField.defaultValue === (existingField.trueValue || 'true') ? 'checked' : ''}>
+                        <div class="form-check">
+                            <input type="checkbox" id="default-checked" class="form-check-input" ${existingField && existingField.defaultValue === (existingField.positiveValue || existingField.trueValue || 'true') ? 'checked' : ''}>
                             <label class="form-check-label" for="default-checked">Checked by default</label>
                         </div>
                     </div>
@@ -322,7 +322,7 @@
     
             // Prepare component data - IMPORTANT: Keep the original field type!
             const componentData = {
-                type: fieldType, // Keep the original field type
+                type: fieldType, // We'll update this right below for checkbox special case
                 label: nameInput.value.trim(),
                 key: existingField ? existingField.key : generateKey(nameInput.value.trim()),
                 description: descriptionInput.value.trim() || '',
@@ -334,18 +334,21 @@
                 values: existingField?.values || [] // For storing multiple values
             };
     
-            // For checkbox, get the true/false values
+            // For checkbox, get the positive/negative values and convert to enhancedCheckbox
             if (fieldType === 'checkbox') {
-                const trueValueInput = modalContent.querySelector('#checkbox-true-value');
-                const falseValueInput = modalContent.querySelector('#checkbox-false-value');
+                // Convert checkbox to enhancedCheckbox
+                componentData.type = 'enhancedCheckbox';
+                
+                const positiveValueInput = modalContent.querySelector('#checkbox-positive-value');
+                const negativeValueInput = modalContent.querySelector('#checkbox-negative-value');
                 const defaultCheckedInput = modalContent.querySelector('#default-checked');
                 
-                componentData.trueValue = trueValueInput.value || 'true';
-                componentData.falseValue = falseValueInput.value || 'false';
+                componentData.positiveValue = positiveValueInput.value || 'true';
+                componentData.negativeValue = negativeValueInput.value || 'false';
                 
                 // Set default value based on the checkbox state
                 componentData.defaultValue = defaultCheckedInput.checked ? 
-                    componentData.trueValue : componentData.falseValue;
+                    componentData.positiveValue : componentData.negativeValue;
             }
     
             // If it's a select field, gather options
@@ -517,7 +520,9 @@
             const fieldId = this.dataset.fieldId;
             const field = formState.components.find(c => c.id === fieldId);
             if (field) {
-                openFieldModal(field.type, field);
+                // For enhancedCheckbox, pass 'checkbox' as the field type to edit it
+                const editType = (field.type === 'enhancedCheckbox') ? 'checkbox' : field.type;
+                openFieldModal(editType, field);
             }
         });
 
@@ -638,20 +643,23 @@
                     </div>
                 </div>
             `;
-        } else if (field.type === 'checkbox') {
-            const isChecked = fieldValue === (field.trueValue || 'true');
+        } else if (field.type === 'checkbox' || field.type === 'enhancedCheckbox') {
+            // Determine if checkbox should be checked
+            const positiveValue = field.positiveValue || 'true';
+            const isChecked = fieldValue === positiveValue;
             
             return `
                 <div class="input-group mb-2" data-index="${index}">
-                    <div class="input-group-text">
-                        <input type="checkbox" id="${inputId}" class="form-check-input" ${isChecked ? 'checked' : ''} 
-                            data-true-value="${field.trueValue || 'true'}" 
-                            data-false-value="${field.falseValue || 'false'}">
+                    <div class="form-check ps-0 d-flex align-items-center">
+                        <input type="checkbox" id="${inputId}" class="form-check-input ms-2" 
+                            ${isChecked ? 'checked' : ''} 
+                            data-positive-value="${field.positiveValue || 'true'}" 
+                            data-negative-value="${field.negativeValue || 'false'}">
+                        <label class="form-check-label ms-2" for="${inputId}">
+                            ${field.description || ''}
+                        </label>
                     </div>
-                    <div class="form-control d-flex justify-content-between">
-                        <span class="checkbox-value-indicator">${isChecked ? (field.trueValue || 'true') : (field.falseValue || 'false')}</span>
-                    </div>
-                    <div class="input-group-append">
+                    <div class="input-group-append ms-auto">
                         ${addRemoveButton}
                     </div>
                 </div>
@@ -910,30 +918,26 @@
                 </select>
                 ${buttonHtml}
             `;
-        } else if (field.type === 'checkbox') {
-            const isChecked = value === (field.trueValue || 'true');
+        } else if (field.type === 'checkbox' || field.type === 'enhancedCheckbox') {
+            // Get positive/negative values, defaulting to true/false
+            const positiveValue = field.positiveValue || 'true';
+            const negativeValue = field.negativeValue || 'false';
+            const isChecked = value === positiveValue;
             
             inputGroup.innerHTML = `
-                <div class="input-group-text">
-                    <input type="checkbox" id="${inputId}" class="form-check-input" ${isChecked ? 'checked' : ''} 
-                        data-true-value="${field.trueValue || 'true'}" 
-                        data-false-value="${field.falseValue || 'false'}">
+                <div class="form-check ps-0 d-flex align-items-center">
+                    <input type="checkbox" id="${inputId}" class="form-check-input ms-2" 
+                        ${isChecked ? 'checked' : ''} 
+                        data-positive-value="${positiveValue}" 
+                        data-negative-value="${negativeValue}">
+                    <label class="form-check-label ms-2" for="${inputId}">
+                        ${field.description || ''}
+                    </label>
                 </div>
-                <div class="form-control d-flex justify-content-between">
-                    <span class="checkbox-value-indicator">${isChecked ? (field.trueValue || 'true') : (field.falseValue || 'false')}</span>
+                <div class="input-group-append ms-auto">
+                    ${buttonHtml}
                 </div>
-                ${buttonHtml}
             `;
-            
-            // Add event listener to update the value indicator
-            const checkboxInput = inputGroup.querySelector('input[type="checkbox"]');
-            const valueIndicator = inputGroup.querySelector('.checkbox-value-indicator');
-            
-            checkboxInput.addEventListener('change', function() {
-                valueIndicator.textContent = this.checked ? 
-                    (this.dataset.trueValue || 'true') : 
-                    (this.dataset.falseValue || 'false');
-            });
         } else if (field.type === 'datetime') {
             inputGroup.innerHTML = `
                 <input type="datetime-local" id="${inputId}" class="form-control" value="${value}">
@@ -1380,10 +1384,10 @@
                     const input = group.querySelector('input, textarea, select');
                     if (input) {
                         if (input.type === 'checkbox') {
-                            // For checkboxes, use the appropriate true/false value
+                            // For checkboxes, use the appropriate positive/negative value
                             component.values[idx] = input.checked ? 
-                                input.dataset.trueValue || 'true' : 
-                                input.dataset.falseValue || 'false';
+                                input.dataset.positiveValue || 'true' : 
+                                input.dataset.negativeValue || 'false';
                         } else {
                             component.values[idx] = input.value;
                         }
@@ -1494,13 +1498,9 @@
     }
 
     document.addEventListener('change', function(event) {
-        if (event.target.type === 'checkbox' && event.target.dataset.trueValue) {
-            const valueIndicator = event.target.closest('.input-group').querySelector('.checkbox-value-indicator');
-            if (valueIndicator) {
-                valueIndicator.textContent = event.target.checked ? 
-                    event.target.dataset.trueValue : 
-                    event.target.dataset.falseValue;
-            }
+        if (event.target.type === 'checkbox' && event.target.dataset.positiveValue) {
+            // We don't need to update any value indicator anymore
+            // The checkbox itself handles the value via its checked state
         }
     });
 
