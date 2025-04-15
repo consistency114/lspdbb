@@ -77,7 +77,7 @@ ob_start();
                             </a>
                         </div>
                         <div class="directory-button-container">
-                            <a href="<?php echo site_url('public_list'); ?>" class="btn btn-outline-secondary btn-directory">
+                            <a href="<?php echo site_url('directory'); ?>" class="btn btn-outline-secondary btn-directory">
                                 <i class="bi bi-collection"></i> Browse Public Directory
                             </a>
                         </div>

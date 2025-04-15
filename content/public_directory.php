@@ -88,8 +88,8 @@ foreach ($approvedListings as $listing) {
                 </div>
                 <div class="col-md-6 text-end">
                     <?php if (auth()->hasRole('admin')): ?>
-                        <a href="<?php echo site_url('admin/public_dir'); ?>" class="btn btn-primary btn-sm">
-                            <i class="bi bi-shield"></i> Admin Panel
+                        <a href="<?php echo site_url('admin/directory'); ?>" class="btn btn-primary btn-sm">
+                            <i class="bi bi-shield"></i> Admin Directory
                         </a>
                     <?php else: ?>
                         <a href="<?php echo site_url('builder'); ?>" class="btn btn-success btn-sm">
