@@ -228,7 +228,8 @@ $required_constants = [
     'ENABLE_JSON_VIEW',
     'FOOTER_TEXT',
     'DOCS_URL',
-    'JSON_URL'
+    'JSON_URL',
+    'DISCORD_WEBHOOK_URL'
 ];
 
 $missing_constants = [];

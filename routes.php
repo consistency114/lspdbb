@@ -15,6 +15,7 @@ legacy('builder.php', 'builder');
 legacy('documentation.php', 'docs');
 legacy('edit.php', 'edit');
 legacy('list.php', 'list');
+legacy('public_directory.php', 'public_directory');
 
 
 // ===================================
@@ -53,6 +54,14 @@ get('/form', function() {
 get('/form/:id', function($params) {
     $_GET['f'] = $params['id']; // Store ID in GET param for backward compatibility
     view('form');
+});
+
+// ===================================
+// Public Directory - For viewing and using lists
+// ===================================
+// List
+get('/public_list', function() {
+    view('public_directory');
 });
 
 // ===================================
@@ -216,6 +225,11 @@ if(ENABLE_AUTH) {
     // List Management Admin Page
     any('/admin/lists', function() {
         view('admin/lists');
+    });
+
+    // Admin Public Directory
+    any('/admin/public_dir', function() {
+        view('admin/public_directory');
     });
 
     // Analytics dashboard

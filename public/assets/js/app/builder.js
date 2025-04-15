@@ -202,6 +202,23 @@
                 }
             });
         }
+
+        // Set up Public Directory toggle
+        const templatePublicToggle = document.getElementById('templatePublicToggle');
+        const templatePublicSection = document.getElementById('templatePublicSection');
+
+        if (templatePublicToggle) {
+            // Initialize from PHP value
+            if (typeof enablePublicLinkPHP !== 'undefined') {
+                templatePublicToggle.checked = enablePublicLinkPHP;
+                templatePublicSection.style.display = enablePublicLinkPHP ? 'block' : 'none';
+            }
+            
+            // Set up toggle event listener
+            templatePublicToggle.addEventListener('change', function() {
+                templatePublicSection.style.display = this.checked ? 'block' : 'none';
+            });
+        }
         
         // Set up template link toggle
         const templateLinkToggle = document.getElementById('templateLinkToggle');
@@ -544,8 +561,10 @@
         // Get template title and link values with toggle states
         const templateTitleToggle = document.getElementById('templateTitleToggle');
         const templateLinkToggle = document.getElementById('templateLinkToggle');
+        const templatePublicToggle = document.getElementById('templatePublicToggle');
         const enableTemplateTitle = templateTitleToggle ? templateTitleToggle.checked : false;
         const enableTemplateLink = templateLinkToggle ? templateLinkToggle.checked : false;
+        const enablePublicLink = templatePublicToggle ? templatePublicToggle.checked : false;
         
         const templateTitle = enableTemplateTitle ? document.getElementById('templateTitle').value || '' : '';
         const templateLink = enableTemplateLink ? document.getElementById('templateLink').value || '' : '';
@@ -578,11 +597,13 @@
                     templateLink: templateLink,
                     enableTemplateTitle: enableTemplateTitle,
                     enableTemplateLink: enableTemplateLink,
+                    enablePublicLink: enablePublicLink,
                     formName: formName,
                     formWidth: formWidth,
                     formStyle: formStyle,
                     editMode: isEditMode,
-                    editingForm: editingForm
+                    editingForm: editingForm,
+                    builder: 'standard'
                 })
             });
 

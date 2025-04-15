@@ -35,6 +35,115 @@ function isTrusted() {
     return (auth()->hasRole('editor') || auth()->hasRole('trusted') || auth()->hasRole('admin'));
 }
 
+/**
+ * Send a Discord webhook notification for public directory submissions
+ * 
+ * @param array $formData Form data being submitted
+ * @param string $formId ID of the form
+ * @param string $username Name of the submitter
+ * @param bool $isUpdate Whether this is an update to an existing listing
+ * @return bool Success status
+ */
+function sendDiscordWebhookNotification($formData, $formId, $username, $isUpdate = false) {
+    // Check if Discord webhook URL is defined in config
+    if (!defined('DISCORD_WEBHOOK_URL') || empty(DISCORD_WEBHOOK_URL)) {
+        return false;
+    }
+    
+    // Prepare the webhook message
+    $formName = isset($formData['formName']) ? $formData['formName'] : 'Unnamed Form';
+    $formStyle = isset($formData['formStyle']) ? $formData['formStyle'] : 'default';
+    $action = $isUpdate ? 'updated' : 'submitted';
+    $formUrl = site_url('form') . '?f=' . $formId;
+    $timestamp = date('c'); // ISO 8601 date format
+    
+    // Format the webhook data
+    $webhookData = [
+        'embeds' => [
+            [
+                'title' => 'New Form ' . ($isUpdate ? 'Update' : 'Submission') . ' for Public Directory',
+                'description' => "**{$username}** has {$action} a form for the public directory.",
+                'color' => 0x3498db, // Blue color
+                'fields' => [
+                    [
+                        'name' => 'Form Name',
+                        'value' => $formName,
+                        'inline' => true
+                    ],
+                    [
+                        'name' => 'Form ID',
+                        'value' => $formId,
+                        'inline' => true
+                    ],
+                    [
+                        'name' => 'Style',
+                        'value' => ucfirst($formStyle),
+                        'inline' => true
+                    ],
+                    [
+                        'name' => 'Submitted By',
+                        'value' => $username,
+                        'inline' => true
+                    ],
+                    [
+                        'name' => 'Action',
+                        'value' => $isUpdate ? 'Form Update' : 'New Form',
+                        'inline' => true
+                    ],
+                    [
+                        'name' => 'Review Status',
+                        'value' => 'Awaiting Approval',
+                        'inline' => true
+                    ],
+                ],
+                'url' => $formUrl,
+                'timestamp' => $timestamp,
+                'footer' => [
+                    'text' => 'reBB Directory Submission System'
+                ]
+            ]
+        ]
+    ];
+    
+    // Add reviewer actions section
+    $adminUrl = site_url('admin/lists');
+    $webhookData['embeds'][0]['fields'][] = [
+        'name' => 'Reviewer Actions',
+        'value' => "[View Form]({$formUrl}) | [Manage Listings]({$adminUrl})",
+        'inline' => false
+    ];
+    
+    // Send the webhook
+    $ch = curl_init(DISCORD_WEBHOOK_URL);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($webhookData));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    
+    $response = curl_exec($ch);
+    $success = ($response !== false && curl_getinfo($ch, CURLINFO_HTTP_CODE) == 204);
+    curl_close($ch);
+
+    if(DEBUG_MODE) {
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+    
+        // Log more detailed information
+        if ($response === false || $httpCode !== 204) {
+            logAttempt("Discord webhook error: HTTP Code: $httpCode, Error: $error", true);
+        }
+    }
+    
+    // Log the webhook attempt
+    logAttempt(
+        "Discord webhook " . ($success ? "sent" : "failed") . " for form: {$formId} by {$username}",
+        !$success
+    );
+    
+    return $success;
+}
+
 // Debug IP variables - to help troubleshoot issues
 if (defined('DEBUG_MODE') && DEBUG_MODE) {
     $raw_remote_addr = $_SERVER['REMOTE_ADDR'] ?? 'Not available';
@@ -79,7 +188,6 @@ if ($requestData === null && json_last_error() !== JSON_ERROR_NONE) {
 if (isset($_SESSION['last_submission_time'])) {
     $timeSinceLastSubmission = time() - $_SESSION['last_submission_time'];
     if ($timeSinceLastSubmission < $ajax_config['cooldown_period']) {
-        logAttempt('Submission rate limit exceeded (cooldown period)');
         echo json_encode([
             'success' => false, 
             'error' => 'Please wait ' . ($ajax_config['cooldown_period'] - $timeSinceLastSubmission) . ' seconds before submitting again.'
@@ -159,6 +267,7 @@ if ($requestType === 'schema') {
     $formStyle = isset($requestData['formStyle']) ? $requestData['formStyle'] : 'default'; // Get form style
     $isEditMode = isset($requestData['editMode']) && $requestData['editMode'] === true;
     $editingFormId = isset($requestData['editingForm']) ? $requestData['editingForm'] : '';
+    $builderType = isset($requestData['builder']) ? $requestData['builder'] : '';
     
     $createdBy = null;
     $verified = false;
@@ -173,6 +282,7 @@ if ($requestType === 'schema') {
     // Get the template title and link fields with toggle states
     $enableTemplateTitle = isset($requestData['enableTemplateTitle']) ? (bool)$requestData['enableTemplateTitle'] : false;
     $enableTemplateLink = isset($requestData['enableTemplateLink']) ? (bool)$requestData['enableTemplateLink'] : false;
+    $enablePublicLink = isset($requestData['enablePublicLink']) ? (bool)$requestData['enablePublicLink'] : false;
     $templateTitle = $enableTemplateTitle && isset($requestData['templateTitle']) ? $requestData['templateTitle'] : '';
     $templateLink = $enableTemplateLink && isset($requestData['templateLink']) ? $requestData['templateLink'] : '';
 
@@ -250,6 +360,9 @@ if ($requestType === 'schema') {
             'templateLink' => $templateLink,
             'enableTemplateTitle' => $enableTemplateTitle,
             'enableTemplateLink' => $enableTemplateLink,
+            'enablePublicLink' => $enablePublicLink,
+            'public' => $enablePublicLink, // Add the public flag
+            'builder' => $builderType,
             'formWidth' => $formWidth,
             'formStyle' => $formStyle,
             'createdBy' => $formCreator, // Maintain original creator
@@ -302,6 +415,56 @@ if ($requestType === 'schema') {
                 // Log the error but don't stop the process
                 logAttempt("Error updating form in database: " . $e->getMessage());
             }
+            
+            // Handle public listing
+            try {
+                $publicListingsStore = new \SleekDB\Store('public_listings', $dbPath, [
+                    'auto_cache' => false,
+                    'timeout' => false
+                ]);
+                
+                // Look up existing public listing
+                $existingPublicListing = $publicListingsStore->findOneBy([['form_id', '=', $editingFormId]]);
+                
+                if ($enablePublicLink) {
+                    // Form should be public
+                    $publicListingData = [
+                        'form_id' => $editingFormId,
+                        'form_name' => $formName,
+                        'form_style' => $formStyle,
+                        'user_id' => $userId,
+                        'username' => $currentUser['username'],
+                        'last_updated' => time(),
+                        'is_guest' => false, // This is definitely a logged-in user at this point
+                        'is_approved' => false // Reset approval status on update
+                    ];
+                    
+                    if ($existingPublicListing) {
+                        // Update existing public listing
+                        $publicListingsStore->updateById($existingPublicListing['_id'], $publicListingData);
+                    } else {
+                        // Create new public listing
+                        $publicListingData['created_at'] = time();
+                        $publicListingsStore->insert($publicListingData);
+                    }
+                    
+                    logAttempt("Updated public listing for form: $editingFormId by user: " . $currentUser['username'], false);
+                    
+                    // Send Discord webhook notification
+                    $formData = [
+                        'formName' => $formName,
+                        'formStyle' => $formStyle
+                    ];
+                    sendDiscordWebhookNotification($formData, $editingFormId, $currentUser['username'], $existingPublicListing ? true : false);
+                } else if ($existingPublicListing) {
+                    // Form is no longer public, remove from listings
+                    $publicListingsStore->deleteById($existingPublicListing['_id']);
+                    logAttempt("Removed public listing for form: $editingFormId by user: " . $currentUser['username'], false);
+                }
+            } catch (\Exception $e) {
+                // Log the error but don't stop the process
+                logAttempt("Error updating public listing: " . $e->getMessage());
+            }
         }
         
         // Update rate limiting counters
@@ -343,6 +506,9 @@ if ($requestType === 'schema') {
             'templateLink' => $templateLink,
             'enableTemplateTitle' => $enableTemplateTitle,
             'enableTemplateLink' => $enableTemplateLink,
+            'enablePublicLink' => $enablePublicLink,
+            'public' => $enablePublicLink, // Add the public flag
+            'builder' => $builderType,
             'formStyle' => $formStyle,
             'createdBy' => $createdBy,
             'formWidth' => $formWidth,
@@ -356,14 +522,17 @@ if ($requestType === 'schema') {
             exit;
         }
         
+        // Initialize database path
+        $dbPath = ROOT_DIR . '/db';
+        
         // Store the form data in SleekDB if the user is authenticated
         if (auth()->isLoggedIn()) {
             $currentUser = auth()->getUser();
             $userId = $currentUser['_id'];
+            $username = $currentUser['username'];
             
             try {
                 // Initialize the SleekDB store for user forms
-                $dbPath = ROOT_DIR . '/db';
                 $userFormsStore = new \SleekDB\Store('user_forms', $dbPath, [
                     'auto_cache' => false,
                     'timeout' => false
@@ -378,10 +547,49 @@ if ($requestType === 'schema') {
                     'last_updated' => time()
                 ]);
                 
-                logAttempt("Added form to database: $randomString by user: " . $currentUser['username']);
+                logAttempt("Added form to database: $randomString by user: " . $currentUser['username'], false);
             } catch (\Exception $e) {
                 // Log the error but don't stop the process
-                logAttempt("Error adding form to database: " . $e->getMessage(), false);
+                logAttempt("Error adding form to database: " . $e->getMessage());
+            }
+        } else {
+            // Set default values for guest users
+            $userId = 'guest';
+            $username = 'Anonymous';
+        }
+        
+        // Handle public listing if enabled - regardless of login status
+        if ($enablePublicLink) {
+            try {
+                $publicListingsStore = new \SleekDB\Store('public_listings', $dbPath, [
+                    'auto_cache' => false,
+                    'timeout' => false
+                ]);
+                
+                // Insert the public listing record
+                $publicListingsStore->insert([
+                    'form_id' => $randomString,
+                    'form_name' => $formName,
+                    'form_style' => $formStyle,
+                    'user_id' => $userId,
+                    'username' => $username,
+                    'created_at' => time(),
+                    'last_updated' => time(),
+                    'is_guest' => !auth()->isLoggedIn(), // Flag to identify guest submissions
+                    'is_approved' => false
+                ]);
+                
+                logAttempt("Added form to public listings: $randomString by " . (auth()->isLoggedIn() ? "user: $username" : "guest"), false);
+                
+                // Send Discord webhook notification for public listing submission
+                $formData = [
+                    'formName' => $formName,
+                    'formStyle' => $formStyle
+                ];
+                sendDiscordWebhookNotification($formData, $randomString, $username, false);
+            } catch (\Exception $e) {
+                // Log the error but don't stop the process
+                logAttempt("Error adding form to public listings: " . $e->getMessage(), false);
             }
         }
 
@@ -613,6 +821,88 @@ if ($requestType === 'schema') {
     }
     
     echo json_encode(['success' => true, 'analyticsEnabled' => true]);
+    exit;
+} elseif ($requestType === 'public_listings') {
+    // Handle public listings API requests
+    $action = isset($requestData['action']) ? $requestData['action'] : 'list';
+    
+    $dbPath = ROOT_DIR . '/db';
+    $publicListingsStore = new \SleekDB\Store('public_listings', $dbPath, [
+        'auto_cache' => false,
+        'timeout' => false
+    ]);
+    
+    switch ($action) {
+        case 'list':
+            // Get options for pagination/filtering
+            $page = isset($requestData['page']) ? (int)$requestData['page'] : 1;
+            $limit = isset($requestData['limit']) ? (int)$requestData['limit'] : 20;
+            $sort = isset($requestData['sort']) ? $requestData['sort'] : 'newest';
+            
+            // Apply pagination and sorting
+            $skip = ($page - 1) * $limit;
+            
+            // Set sorting options
+            $sortOptions = [];
+            if ($sort === 'newest') {
+                $sortOptions['created_at'] = 'desc';
+            } elseif ($sort === 'oldest') {
+                $sortOptions['created_at'] = 'asc';
+            } elseif ($sort === 'name_asc') {
+                $sortOptions['form_name'] = 'asc';
+            } elseif ($sort === 'name_desc') {
+                $sortOptions['form_name'] = 'desc';
+            }
+            
+            // Get public listings with pagination
+            $listings = $publicListingsStore->findAll($limit, $skip, $sortOptions);
+            $total = $publicListingsStore->count();
+            
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'listings' => $listings,
+                    'total' => $total,
+                    'page' => $page,
+                    'limit' => $limit,
+                    'pages' => ceil($total / $limit)
+                ]
+            ]);
+            break;
+            
+        case 'search':
+            $query = isset($requestData['query']) ? $requestData['query'] : '';
+            
+            if (empty($query)) {
+                echo json_encode(['success' => false, 'error' => 'Search query is required.']);
+                exit;
+            }
+            
+            // Search by form name or username
+            $results = $publicListingsStore->createQueryBuilder()
+                ->where([
+                    ['form_name', 'LIKE', "%{$query}%"],
+                    'OR',
+                    ['username', 'LIKE', "%{$query}%"]
+                ])
+                ->limit(20)
+                ->orderBy(['created_at' => 'desc'])
+                ->getQuery()
+                ->fetch();
+            
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'listings' => $results,
+                    'total' => count($results)
+                ]
+            ]);
+            break;
+            
+        default:
+            echo json_encode(['success' => false, 'error' => 'Invalid public listings action.']);
+            exit;
+    }
     exit;
 } else {
     logAttempt('Invalid request type: ' . $requestType);

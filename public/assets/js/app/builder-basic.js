@@ -1339,6 +1339,23 @@
             });
         }
 
+        // Set up Public Directory toggle
+        const templatePublicToggle = document.getElementById('templatePublicToggle');
+        const templatePublicSection = document.getElementById('templatePublicSection');
+
+        if (templatePublicToggle) {
+            // Initialize from PHP value
+            if (typeof enablePublicLinkPHP !== 'undefined') {
+                templatePublicToggle.checked = enablePublicLinkPHP;
+                templatePublicSection.style.display = enablePublicLinkPHP ? 'block' : 'none';
+            }
+            
+            // Set up toggle event listener
+            templatePublicToggle.addEventListener('change', function() {
+                templatePublicSection.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+
         // Set up Template Link toggle
         const templateLinkToggle = document.getElementById('templateLinkToggle');
         const templateLinkSection = document.getElementById('templateLinkSection');
@@ -1411,6 +1428,7 @@
         const titleToggle = document.getElementById('templateTitleToggle');
         const titleInput = document.getElementById('templateTitle');
         const linkToggle = document.getElementById('templateLinkToggle');
+        const publicToggle = document.getElementById('templatePublicToggle');
         const linkInput = document.getElementById('templateLink');
         const formStyleRadios = document.querySelectorAll('input[name="formStyle"]');
         const formWidthInput = document.getElementById('formWidthInput');
@@ -1422,6 +1440,7 @@
         const titleTemplate = enableTitle && titleInput ? titleInput.value : '';
         const enableLink = linkToggle ? linkToggle.checked : false;
         const linkTemplate = enableLink && linkInput ? linkInput.value : '';
+        const enablePublic = publicToggle ? publicToggle.checked : false;
 
         // Get selected form style
         let formStyle = 'default';
@@ -1456,11 +1475,13 @@
                 templateLink: linkTemplate,
                 enableTemplateTitle: enableTitle,
                 enableTemplateLink: enableLink,
+                enablePublicLink: enablePublic,
                 formName: formName,
                 formWidth: formWidth,
                 formStyle: formStyle,
                 editMode: isEditMode,
-                editingForm: editingForm
+                editingForm: editingForm,
+                builder: 'basic'
             })
         })
         .then(response => response.json())

@@ -64,6 +64,13 @@ define('FOOTER_TEXT',       'Made with ❤️ by <a href="https://booskit.dev/" 
 define('LEGACY_URLS_ENABLED', true);         // Support for legacy URL patterns (form.php, etc.)
 
 // ╔════════════════════════════════════════╗
+// ║        NOTIFICATION SETTINGS           ║
+// ╚════════════════════════════════════════╝
+
+// Discord webhook for form submission notifications
+define('DISCORD_WEBHOOK_URL', '');  // Add your Discord webhook URL here
+
+// ╔════════════════════════════════════════╗
 // ║         ANALYTICS CONFIGURATION        ║
 // ╚════════════════════════════════════════╝
 

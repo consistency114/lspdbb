@@ -189,10 +189,6 @@
     color: #333;
 }
 
-.builder-options {
-    margin-bottom: 1.5rem;
-}
-
 .builder-option h3 {
     font-size: 1.1rem;
     margin-bottom: 0.75rem;
@@ -203,7 +199,7 @@
 .builder-buttons {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 2px;
 }
 
 .builder-buttons .btn-action {
@@ -433,6 +429,56 @@ body.dark-mode .docs-link a {
 
 .additional-links .donate-link:hover {
     color: #ff5252;
+}
+
+/* Public Directory Button Styling */
+.directory-button-container {
+    text-align: center;
+}
+
+.btn-directory {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 15px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    width: 100%;
+    height: 70px; /* Reduced height compared to main buttons */
+    border: 1px dashed rgba(0, 0, 0, 0.2);
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-directory i {
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+}
+
+.btn-directory small {
+    opacity: 0.7;
+    font-size: 0.75rem;
+    margin-top: 0.1rem;
+}
+
+.btn-directory:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Dark mode styling for directory button */
+body.dark-mode .btn-directory {
+    background-color: rgba(40, 40, 40, 0.4);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+body.dark-mode .btn-directory:hover {
+    background-color: rgba(60, 60, 60, 0.6);
 }
 
 @keyframes heartbeat {

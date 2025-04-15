@@ -12,6 +12,7 @@ $existingTemplateTitle = ''; // New variable for template title
 $existingTemplateLink = '';  // New variable for template link
 $enableTemplateTitle = false; // New variable for title toggle
 $enableTemplateLink = false;  // New variable for link toggle
+$enablePublicLink = false;
 $existingFormStyle = 'default'; // Default style
 $editMode = isset($_GET['edit_mode']) && $_GET['edit_mode'] === 'true';
 $formCreator = null;
@@ -43,6 +44,7 @@ if (isset($_GET['f']) && !empty($_GET['f'])) {
                 $existingTemplateLink = isset($formData['templateLink']) ? $formData['templateLink'] : '';
                 $enableTemplateTitle = isset($formData['enableTemplateTitle']) ? $formData['enableTemplateTitle'] : false;
                 $enableTemplateLink = isset($formData['enableTemplateLink']) ? $formData['enableTemplateLink'] : false;
+                $enablePublicLink = isset($formData['enablePublicLink']) ? $formData['enablePublicLink'] : false;
                 $existingFormStyle = isset($formData['formStyle']) ? $formData['formStyle'] : 'default';
                 $formWidth = isset($formData['formWidth']) ? $formData['formWidth'] : 45;
                 $formCreator = isset($formData['createdBy']) ? $formData['createdBy'] : null;
@@ -121,7 +123,7 @@ ob_start();
 
     <?php if ($useBasicBuilder): ?>
     <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> <strong>Basic Builder:</strong> You are using the simplified form builder. For advanced features, use the <a href="?builder=standard">standard builder</a>. Note that the basic builder is in it's early stages, you may encounter bugs.
+        <i class="bi bi-info-circle"></i> <strong>Basic Builder:</strong> You are using the simplified form builder. For advanced features, use the <a href="?b=standard">standard builder</a>. Note that the basic builder is in it's early stages, you may encounter bugs.
     </div>
     <?php endif; ?>
 
@@ -220,8 +222,8 @@ ob_start();
                     placeholder='Paste your BBCode / HTML / Template here, use the wildcards above, example: [b]Name:[/b] {NAME_ABC1}.'><?php echo htmlspecialchars($existingTemplate); ?></textarea>
     </div>
 
-        <div id='template-extra-container' style="margin-top: 20px;">
-        <h3>Additional Form Options:</h3>
+    <div id='template-extra-container' style="margin-top: 20px;">
+    <h3>Additional Form Options:</h3>
 
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -288,7 +290,7 @@ ob_start();
                                 <p>Offers a link to users as to where they can submit their generated content.</p>
                                 <div class="tooltip-image">
                                     <img src="<?php echo asset_path('images/form-options/post-content.png'); ?>"
-                                         alt="Dynamic Title Field preview">
+                                            alt="Dynamic Title Field preview">
                                 </div>
                             </div>
                         </div>
@@ -306,8 +308,44 @@ ob_start();
                             value="<?php echo htmlspecialchars($existingTemplateLink); ?>">
                     </div>
                 </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <h5 class="mb-0 me-2">Public Directory Listing</h5>
+                    <div class="style-tooltip">
+                        <i class="bi bi-info-circle"></i>
+                        <div class="tooltip-content">
+                            <p>Display the form on a public directory listing, which has a list of forms that anyone can view.</p>
+                            <div class="tooltip-image">
+                                <img src="<?php echo asset_path('images/form-options/post-content.png'); ?>"
+                                    alt="Public Directory Listing">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="templatePublicToggle"
+                        <?php echo $enablePublicLink ? 'checked' : ''; ?>>
+                    <label class="form-check-label" for="templatePublicToggle">Enable</label>
+                </div>
+            </div>
+            <div class="card-body" id="templatePublicSection" style="<?php echo $enablePublicLink ? '' : 'display: none;'; ?>">
+                <div class="alert alert-warning mb-3">
+                    <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Important:</strong> 
+                    <ul class="mb-0 mt-2">
+                        <li>Your form is <em>already publicly accessible</em> via its direct link without enabling this option.</li>
+                        <li>Enabling this option will add your form to a public directory that is accessible by everyone.</li>
+                        <li>This directory is searchable and your form will be visible to all users.</li>
+                    </ul>
+                </div>
+                <div class="alert alert-info">
+                    <strong><i class="bi bi-info-circle me-2"></i>Note:</strong> After submission, it may take up to 48 hours for your form to appear in the public directory. All submissions are reviewed before being published.
+                </div>
             </div>
         </div>
+    </div>
 
     <div id='button-container'>
         <?php if ($editMode && $isOwnForm): ?>
@@ -365,6 +403,7 @@ $existingTemplateTitleJS = json_encode($existingTemplateTitle, JSON_UNESCAPED_SL
 $existingTemplateLinkJS = json_encode($existingTemplateLink, JSON_UNESCAPED_SLASHES);
 $enableTemplateTitleJS = $enableTemplateTitle ? 'true' : 'false';
 $enableTemplateLinkJS = $enableTemplateLink ? 'true' : 'false';
+$enablePublicLinkJS = $enablePublicLink ? 'true' : 'false';
 $existingStyleJS = json_encode($existingFormStyle);
 $siteURL = site_url();
 $jsonURL = JSON_URL;
@@ -381,6 +420,7 @@ let existingTemplateTitlePHP = $existingTemplateTitleJS;
 let existingTemplateLinkPHP = $existingTemplateLinkJS;
 let enableTemplateTitlePHP = $enableTemplateTitleJS;
 let enableTemplateLinkPHP = $enableTemplateLinkJS;
+let enablePublicLinkPHP = $enableTemplateLinkJS;
 let existingFormStyle = $existingStyleJS;
 let siteURL = "$siteURL";
 let jsonURL = "$jsonURL";
