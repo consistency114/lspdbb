@@ -1,0 +1,10 @@
+# render.yaml  ── Blueprint for Render.com
+services:
+  - type: web                # Web service = gets a public URL
+    name: lspdbb             # Whatever label you like in Render’s dashboard
+    env: php                 # <-- Tells Render to use the PHP image
+    plan: free               # Free Hobby tier
+    branch: main             # Branch Render should track
+    buildCommand: "true"     # No build step needed right now
+    startCommand: "php -S 0.0.0.0:$PORT -t public"  # Launch PHP dev server
+    autoDeploy: true         # (default) Redeploy on every push
