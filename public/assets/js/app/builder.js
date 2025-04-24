@@ -123,7 +123,7 @@
                   allowScript: true    // allow <script> inside HTML component
                 }      
             );      
-                .then(builder => {
+                then(builder => {
                     builderInstance = builder;
                     initializeBuilder();
                     
