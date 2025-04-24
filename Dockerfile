@@ -5,6 +5,11 @@ FROM php:8.3-cli-alpine
 WORKDIR /app
 COPY . .
 
+# Install ZipArchive
+RUN apk add --no-cache libzip-dev zlib-dev \
+ && docker-php-ext-configure zip \
+ && docker-php-ext-install  zip
+
 # Expose the dev-server port Render will map
 EXPOSE 8000
 
