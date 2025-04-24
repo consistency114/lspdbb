@@ -95,8 +95,6 @@
                     editgrid: false
                 }
             },
-            noeval: false,   // 🔓 allow eval/inline script
-            allowScript: true
         }
     };
 
@@ -116,7 +114,14 @@
             }
             
             // Initialize the Form.io builder
-            Formio.builder(builderElement, existingFormData, builderOptions)
+            Formio.builder(
+                builderElement,
+                existingFormData,
+                {
+                  builderOptions,   // ← keeps your palette & editForm
+                  noeval: false,  // allow inline/eval scripts
+                  allowScript: true    // allow <script> inside HTML component
+                }            
                 .then(builder => {
                     builderInstance = builder;
                     initializeBuilder();

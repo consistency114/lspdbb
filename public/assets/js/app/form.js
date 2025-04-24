@@ -153,7 +153,6 @@ function createFormWithSchema() {
         formSchema,
         {
           noAlerts: true,
-          /* allow inline/eval script inside HTML components */
           noeval: false,
           allowScript: true
         }
