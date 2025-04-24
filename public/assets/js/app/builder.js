@@ -122,8 +122,8 @@
                   noeval: false,  // allow inline/eval scripts
                   allowScript: true    // allow <script> inside HTML component
                 }      
-            );      
-                then(builder => {
+            )
+            .then(builder => {
                     builderInstance = builder;
                     initializeBuilder();
                     
