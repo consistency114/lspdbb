@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: lspdbb
+    env: php
+    plan: free
+    branch: main
+    buildCommand: "true"
+    startCommand: "php -S 0.0.0.0:8000 -t public"
