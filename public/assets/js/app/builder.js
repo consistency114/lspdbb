@@ -94,7 +94,9 @@
                     datamap: false,
                     editgrid: false
                 }
-            }
+            },
+            noeval: false,   // 🔓 allow eval/inline script
+            allowScript: true
         }
     };
 

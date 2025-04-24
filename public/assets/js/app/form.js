@@ -148,8 +148,16 @@ function createFormWithSchema() {
     console.log('Creating form with schema...');
     
     // Create the actual form with Form.io
-    Formio.createForm(document.getElementById('formio'), formSchema, { noAlerts: true })
-        .then(function(form) {
+    Formio.createForm(
+        document.getElementById('formio'),
+        formSchema,
+        {
+          noAlerts: true,
+          /* allow inline/eval script inside HTML components */
+          noeval: false,
+          allowScript: true
+        }
+      )        .then(function(form) {
             console.log('Form created successfully');
             // Store form instance globally so we can access it in event handlers
             formInstance = form;
