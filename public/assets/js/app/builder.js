@@ -122,7 +122,13 @@
       builderInstance.on('change',         updateWildcards);
       builderInstance.on('updateComponent',handleComponentUpdate);
       saveButton.addEventListener('click', saveForm);
-      setupTemplateListener();
+
+      try {
+        setupTemplateListener(); // Safely call the function
+      } catch (err) {
+        console.error('Error in setupTemplateListener:', err);
+      }
+
       updateWildcards();
       enhanceBuilderInit();   // toggles, sliders, etc.
     }

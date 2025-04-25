@@ -1,137 +1,130 @@
-/**
- * Portrait Image Component
- * Extends the standard File component to provide a drag-drop, click-to-paste, and paste-from-clipboard
- * image uploader that sends to ImgBB and stores the resulting URL as the component value.
- */
-(function() {
-  // Grab the base FileComponent from Form.io
-  const FileComponent = Formio.Components.components.file;
+/*  public/assets/js/components/custom/portraitImageComponent.js  */
+(function () {
+  const FieldComponent = Formio.Components.components.field;   // simple base class
 
-  class PortraitImageComponent extends FileComponent {
-    // How it appears in the builder palette
+  class PortraitImageComponent extends FieldComponent {
+    /* palette entry */
     static get builderInfo() {
       return {
-        title: 'Portrait Image',
-        group: 'custom',
-        icon: 'image',
+        title:  'Portrait Image',
+        group:  'custom',
+        icon:   'image',
         weight: 70,
         schema: PortraitImageComponent.schema()
       };
     }
 
-    // The default schema when dropped onto a form
+    /* default schema */
     static schema(...extend) {
-      return FileComponent.schema({
+      return FieldComponent.schema({
         type: 'portraitImage',
-        key: 'portraitImage',
+        key:  'portraitImage',
         label: 'Portrait Image',
-        tableView: false,
         input: true,
+        tableView: false,
         ...extend
       });
     }
 
-    // No extra editForm overrides needed—uses FileComponent’s
-    // attach is where we wire up our custom UI
-    attach(element) {
-      super.attach(element);
+    /* 🔸 render our own template – just the drop-zone */
+    render() {
+      return super.render(`
+        <div class="drop-zone" ref="dropzone">
+          📥 Click / Paste (Ctrl+V) / Drag-drop portrait here
+        </div>
+      `);
+    }
 
-      // Hide the default file input
-      if (this.refs.input && this.refs.input[0]) {
-        this.refs.input[0].style.display = 'none';
+    /* 🔸 attach – add CSS + event logic (skipped while in builder UI) */
+    attach(element) {
+      const attached = super.attach(element);
+      this.dropZone  = this.refs.dropzone;
+
+      /* Inject minimal css once */
+      if (!document.getElementById('portrait-image-css')) {
+        const st = document.createElement('style');
+        st.id  = 'portrait-image-css';
+        st.textContent = `
+          .drop-zone{
+            border:2px dashed #888;border-radius:6px;padding:20px;text-align:center;
+            cursor:pointer;user-select:none;transition:.2s;font:inherit;color:#444
+          }
+          .drop-zone.active{
+            border-color:#ffcc00;background:rgba(255,204,0,.12);color:#aa8800
+          }`;
+        document.head.appendChild(st);
       }
 
-      // Create our drop-zone
-      const dz = document.createElement('div');
-      dz.className = 'drop-zone';
-      dz.textContent = '📥 Click / Paste (Ctrl+V) / Drag-Drop portrait here';
+      /* If we’re in the Form Builder, don’t bind interactivity – just show a stub */
+      if (this.builderMode) {
+        this.dropZone.style.opacity = 0.6;
+        this.dropZone.innerHTML = 'Portrait Image<br><small>(drag to canvas – click gear to edit)</small>';
+        return attached;
+      }
 
-      // Inject inline styles (since you can’t add separate CSS)
-      const style = document.createElement('style');
-      style.innerHTML = `
-        .drop-zone {
-          border:2px dashed #888;
-          border-radius:6px;
-          padding:20px;
-          text-align:center;
-          cursor:pointer;
-          transition:0.2s;
-          user-select:none;
-          font: inherit;
-          color: #444;
+      /* -------- runtime interactivity -------- */
+      const setActive = on => this.dropZone.classList.toggle('active', on);
+      const IMGBB = '7c28c7231f3674f342c2c382a750d29b';
+
+      const upload = file => {
+        if (!file || !file.type.startsWith('image/')) {
+          return alert('Not an image file!');
         }
-        .drop-zone.active {
-          border-color:#ffcc00;
-          background:rgba(255,204,0,0.1);
-        }
-      `;
-      document.head.appendChild(style);
-
-      // Insert the drop-zone into the component wrapper
-      this.element.appendChild(dz);
-
-      // Core upload logic
-      const upload = (file) => {
-        const IMGBB_KEY = '7c28c7231f3674f342c2c382a750d29b';
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`);
-        const fd = new FormData();
+        const fd  = new FormData();
         fd.append('image', file);
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `https://api.imgbb.com/1/upload?key=${IMGBB}`);
         xhr.onload = () => {
           let res;
-          try {
-            res = JSON.parse(xhr.responseText);
-          } catch (e) {
-            return alert('Invalid response from ImgBB');
-          }
-          if (!res.success) {
-            return alert('Upload error: ' + res.error.message);
-          }
-          // Set the component’s value to the returned URL
+          try { res = JSON.parse(xhr.responseText); }
+          catch { return alert('Bad response from ImgBB'); }
+          if (!res.success) return alert('Upload error: ' + res.error.message);
+
+          /* store URL as component value */
           this.setValue(res.data.url);
-          alert('✅ Uploaded! URL saved.');
+          alert('✅ Uploaded!');
         };
         xhr.onerror = () => alert('Network error during upload');
         xhr.send(fd);
       };
 
-      // Handle clipboard paste
-      const onPaste = (e) => {
+      /* clipboard + dnd */
+      const onPaste = e => {
         e.preventDefault();
-        dz.classList.remove('active');
-        for (let item of e.clipboardData.items) {
-          if (item.type.startsWith('image/')) {
-            return upload(item.getAsFile());
-          }
+        document.removeEventListener('paste', onPaste);
+        setActive(false);
+        for (const item of e.clipboardData.items) {
+          if (item.type.startsWith('image/')) return upload(item.getAsFile());
         }
-        alert('No image found in clipboard');
+        alert('Clipboard had no image');
       };
 
-      // Bind interactions
-      dz.addEventListener('click', () => {
-        dz.classList.add('active');
+      this.addEventListener(this.dropZone, 'click', () => {
+        setActive(true);
+        this.dropZone.textContent = '⌨️ Paste now (Ctrl+V)…';
         document.addEventListener('paste', onPaste, { once: true });
       });
-      dz.addEventListener('dragover', (e) => {
+      this.addEventListener(this.dropZone, 'dragover', e => { e.preventDefault(); setActive(true); });
+      this.addEventListener(this.dropZone, 'dragleave', () => setActive(false));
+      this.addEventListener(this.dropZone, 'drop', e => {
         e.preventDefault();
-        dz.classList.add('active');
-      });
-      dz.addEventListener('dragleave', () => {
-        dz.classList.remove('active');
-      });
-      dz.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dz.classList.remove('active');
+        setActive(false);
         upload(e.dataTransfer.files[0]);
       });
 
-      return this;
+      return attached;
+    }
+
+    /* Form.io boilerplate – value is a simple string */
+    getValue() {
+      return this.dataValue || '';
+    }
+    updateValue(value, flags) {
+      super.updateValue(value, flags);
     }
   }
 
-  // Register it with Form.io
+  /* register */
   Formio.Components.addComponent('portraitImage', PortraitImageComponent);
-
-  // Expose globally for debugging
-  window.PortraitImageComponent = PortraitImageComponent;
+  window.PortraitImageComponent = PortraitImageComponent;      // debugging
 })();
