@@ -59,9 +59,9 @@ var ComponentRegistry = (function() {
     },
     {
       name: 'PortraitImageComponent',
-      type: 'PortraitImage',
+      type: 'portraitImage',
       group: 'custom',
-      path: 'components/custom/portraitImageComponent.js'
+      path: 'components/custom/PortraitImageComponent.js'
     },
     {
       name: 'DistrictDropdown',
@@ -81,7 +81,6 @@ var ComponentRegistry = (function() {
       group: 'gtaw',
       path: 'components/gtaw/penalCodeSelector.js'
     }
-    // Add additional components here
   ];
   
   /**
@@ -91,29 +90,20 @@ var ComponentRegistry = (function() {
    */
   function _loadScript(src) {
     return new Promise(function(resolve, reject) {
-      // Check if script is already loaded
       if (_loadedScripts.includes(src)) {
         resolve(src + ' already loaded');
         return;
       }
-      
-      // Create script element
       var script = document.createElement('script');
       script.src = src;
       script.async = true;
-      
-      // Set up load event
       script.onload = function() {
         _loadedScripts.push(src);
         resolve(src + ' loaded successfully');
       };
-      
-      // Set up error event
       script.onerror = function() {
         reject(new Error('Failed to load script: ' + src));
       };
-      
-      // Add to document
       document.head.appendChild(script);
     });
   }
@@ -125,144 +115,85 @@ var ComponentRegistry = (function() {
    */
   function _loadAllComponents(basePath) {
     _loading = true;
-    
-    // Get the asset path or use the default (relative to the current path)
-    var path = basePath || '';
-    
-    // Add version to avoid caching if available
+    var pathPrefix = basePath || '';
     var version = window.APP_VERSION ? '?v=' + window.APP_VERSION : '';
-    
-    var loadPromises = _componentDefinitions.map(function(component) {
-      return _loadScript(path + component.path + version)
-        .catch(function(error) {
-          console.error('Error loading component:', component.name, error);
-          return error; // Continue loading other components even if one fails
+
+    // Helper: try multiple URL variants in sequence
+    function tryVariants(variants) {
+      return variants.reduce(function(prevPromise, src) {
+        return prevPromise.catch(function() {
+          return _loadScript(src);
         });
+      }, Promise.reject())
+      .catch(function(err) {
+        console.error('All variant loads failed for:', variants, err);
+        return err;
+      });
+    }
+
+    var loadPromises = _componentDefinitions.map(function(component) {
+      var base = pathPrefix + component.path + version;
+      var lowerAll = pathPrefix + component.path.toLowerCase() + version;
+      var name = component.name || component.type;
+      var filenamePascal = pathPrefix + component.path.replace(/[^\/]+$/, name + '.js') + version;
+      var filenameLower = pathPrefix + component.path.replace(/[^\/]+$/, name.toLowerCase() + '.js') + version;
+      var variants = [ base, lowerAll, filenamePascal, filenameLower ];
+      return tryVariants(variants);
     });
-    
+
     return Promise.all(loadPromises)
       .then(function(results) {
         _loading = false;
-        console.log('Component loading results:', results);
-        
-        // Execute any callbacks waiting for components to load
-        _onComponentsLoadedCallbacks.forEach(function(callback) {
-          callback();
-        });
-        
-        _onComponentsLoadedCallbacks = []; // Clear the callback queue
-        
+        _onComponentsLoadedCallbacks.forEach(function(cb) { cb(); });
+        _onComponentsLoadedCallbacks = [];
         return results;
       });
   }
   
   // Public API
   return {
-    /**
-     * Register a component with Form.io and the registry
-     * @param {string} type - The component type
-     * @param {Object} component - The component class
-     * @returns {boolean} - Success status
-     */
     register: function(type, component) {
       if (!Formio) {
-        console.error('Formio is not loaded, cannot register component:', type);
+        console.error('Formio not loaded');
         return false;
       }
-      
       try {
-        // Register with Form.io
         Formio.Components.addComponent(type, component);
-        
-        // Store in our registry
         _components[type] = component;
         return true;
-      } catch (error) {
-        console.error('Error registering component:', type, error);
+      } catch (e) {
+        console.error('Error registering component', type, e);
         return false;
       }
     },
-    
-    /**
-     * Get all component groups for the builder
-     * @returns {Object} - Component groups configuration
-     */
     getBuilderGroups: function() {
       return _groups;
     },
-    
-    /**
-     * Get a registered component by type
-     * @param {string} type - Component type
-     * @returns {Object|null} - The component class or null if not found
-     */
     getComponent: function(type) {
       return _components[type] || null;
     },
-    
-    /**
-     * Get all registered components
-     * @returns {Object} - All registered components
-     */
     getAllComponents: function() {
       return _components;
     },
-    
-    /**
-     * Check if a component type is registered
-     * @param {string} type - Component type
-     * @returns {boolean} - True if registered
-     */
     hasComponent: function(type) {
       return !!_components[type];
     },
-    
-    /**
-     * Add a new component definition
-     * @param {Object} definition - Component definition
-     * @returns {void}
-     */
-    addComponentDefinition: function(definition) {
-      _componentDefinitions.push(definition);
+    addComponentDefinition: function(def) {
+      _componentDefinitions.push(def);
     },
-    
-    /**
-     * Get all component definitions
-     * @returns {Array} - Array of component definitions
-     */
     getComponentDefinitions: function() {
       return _componentDefinitions;
     },
-    
-    /**
-     * Load all component scripts
-     * @param {string} basePath - Base path for component scripts
-     * @returns {Promise} - Resolves when all components are loaded
-     */
     loadComponents: function(basePath) {
       return _loadAllComponents(basePath);
     },
-    
-    /**
-     * Execute callback when all components are loaded
-     * @param {Function} callback - Callback function
-     * @returns {void}
-     */
-    onComponentsLoaded: function(callback) {
+    onComponentsLoaded: function(cb) {
       if (!_loading && _loadedScripts.length === _componentDefinitions.length) {
-        // If already loaded, execute callback immediately
-        callback();
+        cb();
       } else {
-        // Otherwise, queue callback for when loading finishes
-        _onComponentsLoadedCallbacks.push(callback);
+        _onComponentsLoadedCallbacks.push(cb);
       }
     },
-    
-    /**
-     * Initialize the registry and load components
-     * @param {string} basePath - Base path for component scripts
-     * @returns {Promise} - Resolves when initialized
-     */
     init: function(basePath) {
       console.log('Component Registry initializing...');
       return this.loadComponents(basePath)
@@ -274,5 +205,5 @@ var ComponentRegistry = (function() {
   };
 })();
 
-// Make the registry available globally
+// Expose globally
 window.ComponentRegistry = ComponentRegistry;
