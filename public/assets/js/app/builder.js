@@ -221,11 +221,24 @@
       });
     }
   
-    /* getComponentKeys, checkUsedWildcards, setupTemplateListener,
-       checkAllDatasetWildcardsUsed, updateSaveButtonState
-       — all unchanged, omitted here for brevity —
-    ------------------------------------------------------------------- */
-  
+    function getComponentKeys(component) {
+    }
+
+    // Function to check if all dataset wildcards are used
+    function checkAllDatasetWildcardsUsed() {
+    }
+
+    // Update the save button state based on dataset wildcards
+    function updateSaveButtonState() {
+    }
+
+    // Function to check which wildcards are being used in the template
+    function checkUsedWildcards() {
+    }
+
+    // Add event listener to the template textarea to detect changes
+    function setupTemplateListener() {
+    }
     /* =======================================================================
        8 · Component update handler (uses new generateKey)
     ======================================================================= */
