@@ -67,8 +67,8 @@
     // Initial Builder Options
     let builderOptions = {
         builder: {
-            resource: false,
-            premium: false,
+            resource: true,
+            premium: true,
             advanced: {
                 weight: 20,
                 components: {
@@ -120,8 +120,9 @@
                 existingFormData,
                 {
                   builderOptions,   // ← keeps your palette & editForm
-                  noeval: false,  // allow inline/eval scripts
-                  allowScript: true    // allow <script> inside HTML component
+                  noeval: false,
+                  allowEval: true,
+                  allowScripts: true                  
                 }      
             )
             .then(builder => {
