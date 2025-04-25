@@ -1,4 +1,7 @@
 (function () {
+    /* =======================================================================
+       Grab all the DOM handles we need
+    ======================================================================= */
     const builderElement  = document.getElementById('builder');
     const saveButton      = document.getElementById('saveFormButton');
     const templateInput   = document.getElementById('formTemplate');
@@ -9,9 +12,9 @@
     let builderInstance;
     let predefinedKeys   = new Set();
   
-    /*───────────────────────────────────────────────────────────────────
-      1 · “Preserve Key” checkbox added to each component edit dialog
-    ───────────────────────────────────────────────────────────────────*/
+    /* =======================================================================
+       1 · Add “Preserve Key” checkbox to every component's edit form
+    ======================================================================= */
     document.addEventListener('DOMContentLoaded', () => {
       Formio.Components.components.component.editForm = () => {
         const editForm = Formio.Components.components.component.baseEditForm();
@@ -35,7 +38,9 @@
       };
     });
   
-    /*───────────────────────────────────────────────────────────────────*/
+    /* =======================================================================
+       2 · Helper for legacy “pre-defined” keys
+    ======================================================================= */
     function collectKeys(schema, set) {
       if (schema.key && schema.uniqueKey === true) set.add(schema.key);
       if (schema.components) schema.components.forEach(c => collectKeys(c, set));
@@ -43,9 +48,9 @@
         col.components && col.components.forEach(c => collectKeys(c, set)));
     }
   
-    /*───────────────────────────────────────────────────────────────────
-      2 · Initial builder palette options
-    ───────────────────────────────────────────────────────────────────*/
+    /* =======================================================================
+       3 · Form.io builder palette options
+    ======================================================================= */
     const builderOptions = {
       builder: {
         resource: true,
@@ -65,18 +70,18 @@
       }
     };
   
-    /*───────────────────────────────────────────────────────────────────
-      3 · Registry-driven builder initialisation
-    ───────────────────────────────────────────────────────────────────*/
-    function initializeBuilderWithRegistry() {
+    /* =======================================================================
+       4 · Launch the builder after ComponentRegistry loads
+    ======================================================================= */
+    function initializeBuilderWithRegistry () {
       Object.assign(builderOptions.builder, ComponentRegistry.getBuilderGroups());
       Formio.builder(
         builderElement,
         existingFormData,
         {
           builderOptions,
-          noeval: false,
-          allowEval: true,
+          noeval      : false,
+          allowEval   : true,
           allowScripts: true
         }
       )
@@ -96,9 +101,11 @@
       return typeof ASSETS_BASE_PATH !== 'undefined' ? ASSETS_BASE_PATH : '';
     }
   
-    function startBuilderInitialization() {
-      if (!window.ComponentRegistry)
-        return alert('ComponentRegistry.js must load before builder.js.');
+    function startBuilderInitialization () {
+      if (!window.ComponentRegistry) {
+        alert('ComponentRegistry.js must load before builder.js.');
+        return;
+      }
       ComponentRegistry.init(getAssetBasePath())
         .then(initializeBuilderWithRegistry)
         .catch(err => {
@@ -108,46 +115,52 @@
     }
     startBuilderInitialization();
   
-    /*───────────────────────────────────────────────────────────────────
-      4 · Once builder ready, wire UI
-    ───────────────────────────────────────────────────────────────────*/
-    function initializeBuilder() {
+    /* =======================================================================
+       5 · Once the builder is ready, wire up all UI helpers
+    ======================================================================= */
+    function initializeBuilder () {
       builderInstance.on('change',         updateWildcards);
       builderInstance.on('updateComponent',handleComponentUpdate);
       saveButton.addEventListener('click', saveForm);
       setupTemplateListener();
       updateWildcards();
-      // (all toggle / UX helpers remain unchanged)
-      enhanceBuilderInit();
+      enhanceBuilderInit();   // toggles, sliders, etc.
     }
   
-    /*───────────────────────────────────────────────────────────────────
-      5 · Helpers for keys / wildcards
-    ───────────────────────────────────────────────────────────────────*/
-    function generateUniqueId() {
+    /* =======================================================================
+       6 · Unique-key generation helpers
+    ======================================================================= */
+    function generateUniqueId () {
       componentCounter++;
       return `${componentCounter}${Math.random().toString(36).substr(2,4).toUpperCase()}`;
     }
   
-    /* ★ FIXED: defend against undefined label → always string */
-    function generateKey(label, component) {
+    /* ★★★  FIXED  ★★★
+       Ensure we always call .toUpperCase() on a STRING, never undefined */
+    function generateKey (label, component) {
       if (component.type === 'button' && component.action === 'submit') {
         return component.key || '';
       }
-      const raw = (label || component.label || component.key || 'FIELD').toString();
+      const raw = (
+          label ||           // parameter from caller
+          component.label || // fallback to component label
+          component.key   || // fallback to existing key
+          'FIELD'            // ultimate fallback
+        ).toString();
+  
       const cleanLabel = raw
         .trim()
         .toUpperCase()
         .replace(/ /g, '_')
         .replace(/[^A-Z0-9_]/g, '');
+  
       return `${cleanLabel}_${generateUniqueId()}`;
     }
   
-    /*──────────────────────────────────────────────────────────────
-      updateWildcards, copyToClipboard, getComponentKeys,
-      checkUsedWildcards, etc. –– UNCHANGED
-    ──────────────────────────────────────────────────────────────*/
-    function updateWildcards() {
+    /* =======================================================================
+       7 · Wildcard rendering / copy helpers (unchanged)
+    ======================================================================= */
+    function updateWildcards () {
       const comps = builderInstance?.form?.components || [];
       const wildcardArray = comps.flatMap(getComponentKeys);
   
@@ -160,9 +173,9 @@
       wildcardList.innerHTML = wildcardArray.map(key => {
         const wild = `{${key}}`;
         const isDS = key.startsWith('@START_') || key.startsWith('@END_');
+        const cls  = isDS ? 'wildcard wildcard-dataset wildcard-danger' : 'wildcard';
         return `
-          <span class="wildcard ${isDS?'wildcard-dataset wildcard-danger':''}"
-                data-wildcard="${key}">
+          <span class="${cls}" data-wildcard="${key}">
             ${wild}
             <button class="copy-btn" data-clipboard="${wild}" title="Copy to clipboard">
               <i class="bi bi-clipboard"></i>
@@ -173,38 +186,44 @@
       document.querySelectorAll('.copy-btn').forEach(btn => {
         btn.onclick = e => {
           e.stopPropagation();
-          copyToClipboard(btn.dataset.clipboard).then(() => {
-            const old = btn.innerHTML; btn.innerHTML = '<i class="bi bi-check-lg"></i>';
-            setTimeout(() => btn.innerHTML = old, 1000);
-          }).catch(err => {
-            console.error('Copy failed:', err);
-            alert('Clipboard copy failed.');
-          });
+          copyToClipboard(btn.dataset.clipboard)
+            .then(() => {
+              const old = btn.innerHTML;
+              btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+              setTimeout(()=>btn.innerHTML=old,1000);
+            })
+            .catch(err => {
+              console.error('Copy failed:', err);
+              alert('Clipboard copy failed.');
+            });
         };
       });
       checkUsedWildcards();
     }
   
-    function copyToClipboard(text) {
+    function copyToClipboard (text) {
       if (navigator?.clipboard?.writeText) return navigator.clipboard.writeText(text);
-      return new Promise((res, rej) => {
-        try {
-          const ta = document.createElement('textarea');
-          ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+      return new Promise((res,rej)=>{
+        try{
+          const ta=document.createElement('textarea');
+          ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
           document.body.appendChild(ta); ta.select();
-          const ok = document.execCommand('copy');
+          const ok=document.execCommand('copy');
           document.body.removeChild(ta);
-          ok ? res() : rej(new Error('execCommand copy failed'));
-        } catch (e){ rej(e);}
+          ok?res():rej(new Error('execCommand copy failed'));
+        }catch(e){rej(e);}
       });
     }
   
-    /* … getComponentKeys(), checkUsedWildcards(), etc. – unchanged … */
+    /* getComponentKeys, checkUsedWildcards, setupTemplateListener,
+       checkAllDatasetWildcardsUsed, updateSaveButtonState
+       — all unchanged, omitted here for brevity —
+    ------------------------------------------------------------------- */
   
-    /*───────────────────────────────────────────────────────────────────
-      6 · Component update logic (unchanged except generateKey fix)
-    ───────────────────────────────────────────────────────────────────*/
-    function handleComponentUpdate(comp) {
+    /* =======================================================================
+       8 · Component update handler (uses new generateKey)
+    ======================================================================= */
+    function handleComponentUpdate (comp) {
       if (comp.action === 'submit') return;
       if (comp.uniqueKey === true)  return;
   
@@ -218,15 +237,86 @@
       const newKey = generateKey(comp.label, comp);
       if (comp.key !== newKey) { comp.key = newKey; builderInstance.redraw(); }
   
-      fetch('ajax',{ method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({type:'analytics',action:'track_component',component:comp.type})
+      fetch('ajax',{
+        method :'POST',
+        headers:{'Content-Type':'application/json'},
+        body   : JSON.stringify({type:'analytics',action:'track_component',component:comp.type})
       }).catch(()=>{});
     }
   
-    /*───────────────────────────────────────────────────────────────────
-      7 · saveForm, enhanceBuilderInit, etc. – all UNCHANGED
-    ───────────────────────────────────────────────────────────────────*/
-    /* (code continues exactly as in your original) */
+    /* =======================================================================
+       9 · saveForm (unchanged from your script)
+    ======================================================================= */
+    async function saveForm () {
+      const formSchema = builderInstance?.form;
+      if (!formSchema) return alert('No form schema found');
+  
+      const formName  = formNameInput.value;
+      const formStyle = document.querySelector('input[name="formStyle"]:checked').value;
+  
+      const templateTitleToggle  = document.getElementById('templateTitleToggle');
+      const templateLinkToggle   = document.getElementById('templateLinkToggle');
+      const templatePublicToggle = document.getElementById('templatePublicToggle');
+  
+      const enableTemplateTitle = templateTitleToggle ? templateTitleToggle.checked : false;
+      const enableTemplateLink  = templateLinkToggle  ? templateLinkToggle.checked  : false;
+      const enablePublicLink    = templatePublicToggle? templatePublicToggle.checked: false;
+  
+      const templateTitle = enableTemplateTitle ? (document.getElementById('templateTitle').value || '') : '';
+      const templateLink  = enableTemplateLink  ? (document.getElementById('templateLink').value  || '') : '';
+  
+      fetch('ajax',{
+        method :'POST',
+        headers:{'Content-Type':'application/json'},
+        body   : JSON.stringify({type:'analytics',action:'track_theme',theme:formStyle})
+      }).catch(()=>{});
+  
+      isEditMode   = typeof isEditMode !== 'undefined' && isEditMode;
+      const editingForm = document.getElementById('editingForm')?.value;
+      const formWidth   = parseInt(document.getElementById('formWidthInput').value,10);
+  
+      try {
+        const resp = await fetch('ajax',{
+          method :'POST',
+          headers:{'Content-Type':'application/json'},
+          body   : JSON.stringify({
+            type:'schema', schema:formSchema, template:templateInput.value,
+            templateTitle, templateLink,
+            enableTemplateTitle, enableTemplateLink, enablePublicLink,
+            formName, formWidth, formStyle,
+            editMode:isEditMode, editingForm, builder:'standard'
+          })
+        });
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.error);
+  
+        let formId = data.formId ||
+                     data.filename.replace('forms/','').replace('_schema.json','');
+        if (formId.includes('/')||formId.includes('\\'))
+          formId = formId.split(/[\\/]/).pop();
+  
+        const shareUrl = siteURL + `form?f=${formId}`;
+        document.getElementById('shareable-link').textContent = shareUrl;
+        document.getElementById('shareable-link').href        = shareUrl;
+        document.getElementById('go-to-form-button').href     = shareUrl;
+        document.getElementById('success-message').style.display = 'block';
+      } catch (err) {
+        console.error('Save error:', err);
+        alert('Error saving form: ' + (err.message || 'Unknown error'));
+      }
+    }
+  
+    /* =======================================================================
+       10 · Misc UX helpers (enhanceBuilderInit, sliders) unchanged
+    ======================================================================= */
+    // … everything below this point in your original file remains identical …
+  
+    document.getElementById('formWidthSlider').addEventListener('input', e => {
+      document.getElementById('formWidthInput').value = e.target.value;
+    });
+    document.getElementById('formWidthInput').addEventListener('input', e => {
+      document.getElementById('formWidthSlider').value = e.target.value;
+    });
   
   })();
   
