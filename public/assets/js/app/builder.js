@@ -1,5 +1,3 @@
-import './components/custom/portraitImageComponent.js';
-
 (function() {
     const builderElement = document.getElementById('builder');
     const saveButton = document.getElementById('saveFormButton');

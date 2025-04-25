@@ -5,8 +5,6 @@
 
 // Store a reference to the form instance so we can access it from event handlers
 
-import './components/custom/portraitImageComponent.js';
-
 let formInstance = null;
 
 // Wait for all scripts to load before initializing the form
