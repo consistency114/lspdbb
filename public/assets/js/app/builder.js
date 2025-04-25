@@ -1,3 +1,5 @@
+import './components/custom/portraitImageComponent.js';
+
 (function() {
     const builderElement = document.getElementById('builder');
     const saveButton = document.getElementById('saveFormButton');
@@ -7,6 +9,7 @@
     let componentCounter = 0;
     let builderInstance;
     let predefinedKeys = new Set();
+    
 
     // Add this to the beginning of your builder.js file, after the initial variable declarations
     document.addEventListener('DOMContentLoaded', function() {
