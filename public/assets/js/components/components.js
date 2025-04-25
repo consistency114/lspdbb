@@ -82,11 +82,9 @@ var ComponentRegistry = (function() {
       path: 'components/gtaw/penalCodeSelector.js'
     }
   ];
-  
+   
   /**
    * Load a JavaScript file dynamically
-   * @param {string} src - Path to the JavaScript file
-   * @returns {Promise} - Resolves when script is loaded
    */
   function _loadScript(src) {
     return new Promise(function(resolve, reject) {
@@ -110,18 +108,15 @@ var ComponentRegistry = (function() {
   
   /**
    * Load all component scripts defined in _componentDefinitions
-   * @param {string} basePath - Base path prefix for all component paths
-   * @returns {Promise} - Resolves when all components are loaded
    */
   function _loadAllComponents(basePath) {
     _loading = true;
     var pathPrefix = basePath || '';
     var version = window.APP_VERSION ? '?v=' + window.APP_VERSION : '';
 
-    // Helper: try multiple URL variants in sequence
     function tryVariants(variants) {
-      return variants.reduce(function(prevPromise, src) {
-        return prevPromise.catch(function() {
+      return variants.reduce(function(prev, src) {
+        return prev.catch(function() {
           return _loadScript(src);
         });
       }, Promise.reject())
@@ -131,17 +126,16 @@ var ComponentRegistry = (function() {
       });
     }
 
-    var loadPromises = _componentDefinitions.map(function(component) {
-      var base = pathPrefix + component.path + version;
-      var lowerAll = pathPrefix + component.path.toLowerCase() + version;
-      var name = component.name || component.type;
-      var filenamePascal = pathPrefix + component.path.replace(/[^\/]+$/, name + '.js') + version;
-      var filenameLower = pathPrefix + component.path.replace(/[^\/]+$/, name.toLowerCase() + '.js') + version;
-      var variants = [ base, lowerAll, filenamePascal, filenameLower ];
-      return tryVariants(variants);
+    var promises = _componentDefinitions.map(function(def) {
+      var base = pathPrefix + def.path + version;
+      var lowerAll = pathPrefix + def.path.toLowerCase() + version;
+      var name = def.name || def.type;
+      var pascalFile = pathPrefix + def.path.replace(/[^\/]+$/, name + '.js') + version;
+      var lowerFile = pathPrefix + def.path.replace(/[^\/]+$/, name.toLowerCase() + '.js') + version;
+      return tryVariants([base, lowerAll, pascalFile, lowerFile]);
     });
 
-    return Promise.all(loadPromises)
+    return Promise.all(promises)
       .then(function(results) {
         _loading = false;
         _onComponentsLoadedCallbacks.forEach(function(cb) { cb(); });
@@ -152,14 +146,11 @@ var ComponentRegistry = (function() {
   
   // Public API
   return {
-    register: function(type, component) {
-      if (!Formio) {
-        console.error('Formio not loaded');
-        return false;
-      }
+    register: function(type, comp) {
+      if (!Formio) { console.error('Formio not loaded'); return false; }
       try {
-        Formio.Components.addComponent(type, component);
-        _components[type] = component;
+        Formio.Components.addComponent(type, comp);
+        _components[type] = comp;
         return true;
       } catch (e) {
         console.error('Error registering component', type, e);
@@ -169,23 +160,22 @@ var ComponentRegistry = (function() {
     getBuilderGroups: function() {
       return _groups;
     },
-    getComponent: function(type) {
-      return _components[type] || null;
-    },
-    getAllComponents: function() {
-      return _components;
-    },
-    hasComponent: function(type) {
-      return !!_components[type];
-    },
-    addComponentDefinition: function(def) {
-      _componentDefinitions.push(def);
-    },
-    getComponentDefinitions: function() {
-      return _componentDefinitions;
-    },
     loadComponents: function(basePath) {
       return _loadAllComponents(basePath);
+    },
+    init: function(basePath) {
+      console.log('Component Registry initializing...');
+      return this.loadComponents(basePath)
+        .then(function() {
+          // Populate groups with their component types
+          _componentDefinitions.forEach(function(def) {
+            if (_groups[def.group]) {
+              _groups[def.group].components[def.type] = true;
+            }
+          });
+          console.log('Component Registry initialized');
+          return _groups;
+        });
     },
     onComponentsLoaded: function(cb) {
       if (!_loading && _loadedScripts.length === _componentDefinitions.length) {
@@ -193,14 +183,6 @@ var ComponentRegistry = (function() {
       } else {
         _onComponentsLoadedCallbacks.push(cb);
       }
-    },
-    init: function(basePath) {
-      console.log('Component Registry initializing...');
-      return this.loadComponents(basePath)
-        .then(function() {
-          console.log('Component Registry initialized');
-          return _groups;
-        });
     }
   };
 })();

@@ -472,7 +472,7 @@ JSVARS;
     <!-- Custom Script Functions -->
     <script src="'. asset_path('js/app/custom.js') .'?v=' . APP_VERSION . '"></script>
 
-    <script src="'. asset_path('js/components/custom/portraitImageComponent.js') .'"></script>
+    <script src="'. asset_path('js/components/custom/portraitimagecomponent.js') .'"></script>
 
     <!-- Main Form Script - relies on ComponentRegistry -->
     <script src="'. asset_path('js/app/form.js') .'?v=' . APP_VERSION . '"></script>
