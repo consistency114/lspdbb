@@ -61,7 +61,7 @@ var ComponentRegistry = (function() {
       name: 'PortraitImageComponent',
       type: 'portraitImage',
       group: 'custom',
-      path: 'components/custom/PortraitImageComponent.js'
+      path: 'components/custom/portraitimagecomponent.js'
     },
     {
       name: 'DistrictDropdown',
