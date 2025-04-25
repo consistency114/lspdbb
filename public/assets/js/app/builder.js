@@ -1,6 +1,6 @@
 (function () {
   /* =======================================================================
-     Grab all the DOM handles we need
+     DOM handles
   ======================================================================= */
   const builderElement  = document.getElementById('builder');
   const saveButton      = document.getElementById('saveFormButton');
@@ -139,7 +139,6 @@
     return `${componentCounter}${Math.random().toString(36).substr(2,4).toUpperCase()}`;
   }
 
-  /*  FIXED  – always cast to string before toUpperCase()  */
   function generateKey (label, component) {
     if (component.type === 'button' && component.action === 'submit') {
       return component.key || '';
@@ -154,20 +153,17 @@
   }
 
   /* =======================================================================
-     7 · Wildcard helper functions (NEW)
+     7 · Wildcard helper functions
   ======================================================================= */
   function getComponentKeys(component) {
-    // ignore submit buttons
     if (component.type === 'button' && component.action === 'submit') return [];
 
     const keys = [];
 
-    // datagrid dataset wildcards
     if (component.type === 'datagrid' && component.key) {
       keys.push(`@START_${component.key}@`, `@END_${component.key}@`);
     }
 
-    // survey wildcards
     if (component.type === 'survey' && component.key && Array.isArray(component.questions)) {
       component.questions.forEach((q,i)=>{
         if (q.value) {
@@ -177,7 +173,6 @@
       });
     }
 
-    // selectboxes option wildcards
     if (component.type === 'selectboxes' && component.key && Array.isArray(component.values)) {
       component.values.forEach(opt=>{
         if (opt.value) {
@@ -187,7 +182,6 @@
       });
     }
 
-    // standard inputs incl. file/image
     if ([
           'textfield','textarea','checkbox','select','radio','hidden',
           'datetime','day','time','file','image'
@@ -195,10 +189,9 @@
       keys.push(component.key);
     }
 
-    // recurse
     if (component.components) keys.push(...component.components.flatMap(getComponentKeys));
     if (component.columns)    keys.push(...component.columns.flatMap(col =>
-                                     col.components?.flatMap(getComponentKeys) || []));
+                               col.components?.flatMap(getComponentKeys) || []));
     return keys;
   }
 
@@ -206,14 +199,12 @@
     const components   = builderInstance?.form?.components || [];
     const wildcardKeys = components.flatMap(getComponentKeys);
 
-    // dataset help banner
     const helpText = document.getElementById('dataset-help-text');
     if (helpText) {
       const hasDS = wildcardKeys.some(k=>k.startsWith('@START_')||k.startsWith('@END_'));
       helpText.style.display = hasDS ? 'block' : 'none';
     }
 
-    // render list
     wildcardList.innerHTML = wildcardKeys.map(k=>{
       const ds    = k.startsWith('@START_')||k.startsWith('@END_');
       const cls   = ['wildcard', ds?'wildcard-dataset':'' , ds?'wildcard-danger':'']
@@ -228,13 +219,12 @@
         </span>`;
     }).join('');
 
-    // clipboard buttons
     document.querySelectorAll('.copy-btn').forEach(btn=>{
       btn.onclick = e=>{
         e.stopPropagation();
         copyToClipboard(btn.dataset.clipboard).then(()=>{
           const old = btn.innerHTML;
-          btn.innerHTML='<i class="bi bi-check-lg"></i>';
+          btn.innerHTML = '<i class="bi bi-check-lg"></i>';
           setTimeout(()=>btn.innerHTML=old,1e3);
         });
       };
@@ -290,7 +280,7 @@
   }
 
   /* =======================================================================
-     8 · Component update handler (already in your file, unchanged)
+     8 · Component update handler
   ======================================================================= */
   function handleComponentUpdate (comp) {
     if (comp.action === 'submit') return;
@@ -314,12 +304,79 @@
   }
 
   /* =======================================================================
-     9 · saveForm (you already had the full version, unchanged)
+     9 · saveForm (original full body)
   ======================================================================= */
-  async function saveForm () { /* … your existing full code stays … */ }
+  async function saveForm () {
+    const formSchema = builderInstance?.form;
+    if (!formSchema) return alert('No form schema found');
+
+    const formName  = formNameInput.value;
+    const formStyle = document.querySelector('input[name="formStyle"]:checked').value;
+
+    const templateTitleToggle  = document.getElementById('templateTitleToggle');
+    const templateLinkToggle   = document.getElementById('templateLinkToggle');
+    const templatePublicToggle = document.getElementById('templatePublicToggle');
+
+    const enableTemplateTitle = templateTitleToggle ? templateTitleToggle.checked : false;
+    const enableTemplateLink  = templateLinkToggle  ? templateLinkToggle.checked  : false;
+    const enablePublicLink    = templatePublicToggle? templatePublicToggle.checked: false;
+
+    const templateTitle = enableTemplateTitle ? (document.getElementById('templateTitle').value || '') : '';
+    const templateLink  = enableTemplateLink  ? (document.getElementById('templateLink').value  || '') : '';
+
+    /* analytics: theme */
+    fetch('ajax',{
+      method :'POST',
+      headers:{'Content-Type':'application/json'},
+      body   : JSON.stringify({type:'analytics',action:'track_theme',theme:formStyle})
+    }).catch(()=>{});
+
+    isEditMode   = typeof isEditMode !== 'undefined' && isEditMode;
+    const editingForm = document.getElementById('editingForm')?.value;
+    const formWidth   = parseInt(document.getElementById('formWidthInput').value,10);
+
+    try {
+      const resp = await fetch('ajax',{
+        method :'POST',
+        headers:{'Content-Type':'application/json'},
+        body   : JSON.stringify({
+          type:'schema',
+          schema:formSchema,
+          template:templateInput.value,
+          templateTitle,
+          templateLink,
+          enableTemplateTitle,
+          enableTemplateLink,
+          enablePublicLink,
+          formName,
+          formWidth,
+          formStyle,
+          editMode:isEditMode,
+          editingForm,
+          builder:'standard'
+        })
+      });
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.error);
+
+      let formId = data.formId ||
+                   data.filename.replace('forms/','').replace('_schema.json','');
+      if (formId.includes('/')||formId.includes('\\'))
+        formId = formId.split(/[\\/]/).pop();
+
+      const shareUrl = siteURL + `form?f=${formId}`;
+      document.getElementById('shareable-link').textContent = shareUrl;
+      document.getElementById('shareable-link').href        = shareUrl;
+      document.getElementById('go-to-form-button').href     = shareUrl;
+      document.getElementById('success-message').style.display = 'block';
+    } catch (err) {
+      console.error('Save error:', err);
+      alert('Error saving form: ' + (err.message || 'Unknown error'));
+    }
+  }
 
   /* =======================================================================
-     10 · Misc UX helpers (enhanceBuilderInit, sliders)
+     10 · Misc UX helpers
   ======================================================================= */
   function initFormStyle() {
     if (typeof existingFormStyle !== 'undefined' && existingFormStyle) {
