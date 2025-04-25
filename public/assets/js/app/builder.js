@@ -163,48 +163,7 @@
       return `${cleanLabel}_${generateUniqueId()}`;
     }
   
-    /* =======================================================================
-       7 · Wildcard rendering / copy helpers (unchanged)
-    ======================================================================= */
-    function updateWildcards () {
-      const comps = builderInstance?.form?.components || [];
-      const wildcardArray = comps.flatMap(getComponentKeys);
-  
-      const helpText = document.getElementById('dataset-help-text');
-      if (helpText) {
-        const hasDS = wildcardArray.some(k => k.startsWith('@START_') || k.startsWith('@END_'));
-        helpText.style.display = hasDS ? 'block' : 'none';
-      }
-  
-      wildcardList.innerHTML = wildcardArray.map(key => {
-        const wild = `{${key}}`;
-        const isDS = key.startsWith('@START_') || key.startsWith('@END_');
-        const cls  = isDS ? 'wildcard wildcard-dataset wildcard-danger' : 'wildcard';
-        return `
-          <span class="${cls}" data-wildcard="${key}">
-            ${wild}
-            <button class="copy-btn" data-clipboard="${wild}" title="Copy to clipboard">
-              <i class="bi bi-clipboard"></i>
-            </button>
-          </span>`;
-      }).join('');
-  
-      document.querySelectorAll('.copy-btn').forEach(btn => {
-        btn.onclick = e => {
-          e.stopPropagation();
-          copyToClipboard(btn.dataset.clipboard)
-            .then(() => {
-              const old = btn.innerHTML;
-              btn.innerHTML = '<i class="bi bi-check-lg"></i>';
-              setTimeout(()=>btn.innerHTML=old,1000);
-            })
-            .catch(err => {
-              console.error('Copy failed:', err);
-              alert('Clipboard copy failed.');
-            });
-        };
-      });
-      checkUsedWildcards();
+    function updateWildcards() {
     }
   
     function copyToClipboard (text) {
