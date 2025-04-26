@@ -62,3 +62,37 @@ function getCookie(name) {
     }
     return null;
 }
+
+// When the form instance is ready...
+Formio.builder(document.getElementById('formio'), formSchema, {
+    hooks: {
+      afterSubmit: [],
+      init: [
+        function(form) {
+          // Get your portrait component
+          var portraitComp = form.getComponent('portrait');
+          // Find its actual file-input DOM node
+          var inputEl = portraitComp.element.querySelector('input[type="file"]');
+  
+          // Listen for paste events on the whole window (or swap 'window' for 'inputEl')
+          window.addEventListener('paste', function(evt) {
+            var clipboard = evt.clipboardData || evt.originalEvent.clipboardData;
+            if (!clipboard) return;
+            // Find any file items (images)
+            for (var i = 0; i < clipboard.items.length; i++) {
+              var item = clipboard.items[i];
+              if (item.kind === 'file') {
+                var blob = item.getAsFile();
+                // Upload via Form.io
+                portraitComp.uploadFile([blob]).then(function(uploaded) {
+                  // uploaded is an array of file objects
+                  portraitComp.setValue(uploaded);
+                });
+              }
+            }
+          });
+        }
+      ]
+    }
+  });
+  
