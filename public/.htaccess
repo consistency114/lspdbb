@@ -43,3 +43,10 @@ RewriteRule ^ index.php [L]
 
 # Disable directory listing
 Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /manager/
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.html [L]
+</IfModule>

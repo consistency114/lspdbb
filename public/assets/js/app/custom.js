@@ -62,37 +62,52 @@ function getCookie(name) {
     }
     return null;
 }
+// custom.js
 
-// When the form instance is ready...
-Formio.builder(document.getElementById('formio'), formSchema, {
-    hooks: {
-      afterSubmit: [],
-      init: [
-        function(form) {
-          // Get your portrait component
-          var portraitComp = form.getComponent('portrait');
-          // Find its actual file-input DOM node
-          var inputEl = portraitComp.element.querySelector('input[type="file"]');
-  
-          // Listen for paste events on the whole window (or swap 'window' for 'inputEl')
-          window.addEventListener('paste', function(evt) {
-            var clipboard = evt.clipboardData || evt.originalEvent.clipboardData;
-            if (!clipboard) return;
-            // Find any file items (images)
-            for (var i = 0; i < clipboard.items.length; i++) {
-              var item = clipboard.items[i];
-              if (item.kind === 'file') {
-                var blob = item.getAsFile();
-                // Upload via Form.io
-                portraitComp.uploadFile([blob]).then(function(uploaded) {
-                  // uploaded is an array of file objects
-                  portraitComp.setValue(uploaded);
-                });
-              }
-            }
-          });
-        }
-      ]
+// Wait until the DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  // Replace with your actual form URL or JSON schema variable
+  const formUrl = 'https://yourproject.form.io/yourForm';
+
+  // Render the form into the <div id="formio"></div>
+  Formio.createForm(
+    document.getElementById('formio'),
+    formUrl
+  ).then(function(form) {
+    // Get the built-in File component by its key
+    const portraitComp = form.getComponent('portrait');
+    if (!portraitComp) {
+      console.warn('Portrait component (key="portrait") not found.');
+      return;
     }
+
+    // Listen for paste events anywhere in the window
+    window.addEventListener('paste', function(evt) {
+      const clipboard = evt.clipboardData || evt.originalEvent.clipboardData;
+      if (!clipboard) return;
+
+      // Find the first file item (if any)
+      for (let i = 0; i < clipboard.items.length; i++) {
+        const item = clipboard.items[i];
+        if (item.kind === 'file') {
+          const blob = item.getAsFile();
+          if (!blob) continue;
+
+          // Upload via the File component’s API
+          portraitComp.uploadFile([blob])
+            .then(function(uploaded) {
+              // Set the component’s value to the uploaded file object(s)
+              portraitComp.setValue(uploaded);
+            })
+            .catch(function(err) {
+              console.error('Portrait upload failed:', err);
+            });
+          break; // stop after the first image file
+        }
+      }
+    });
+  })
+  .catch(function(err) {
+    console.error('Form.io form error:', err);
   });
-  
+});
