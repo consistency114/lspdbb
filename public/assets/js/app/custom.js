@@ -63,37 +63,63 @@ function getCookie(name) {
     return null;
 }
 // custom.js
+// custom.js
 
-// Wait until the form is rendered
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('formio');
-  if (!container) return;
+  if (!container) {
+    console.warn('Form container #formio not found');
+    return;
+  }
 
-  // Listen for the Form.io render event on that container
   container.addEventListener('formio-render', function(evt) {
     const form = evt.detail.form;
+    console.log('Form.io render event fired, form instance:', form);
+
     const portraitComp = form.getComponent('portrait');
     if (!portraitComp) {
-      console.warn('Portrait component not found');
+      console.warn('Portrait component (key="portrait") not found');
       return;
     }
+    console.log('Portrait component found:', portraitComp);
 
-    // Once the form's up, install your paste→upload logic
     window.addEventListener('paste', function(e) {
-      const clipboard = e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData);
-      if (!clipboard) return;
+      console.log('Paste event detected:', e);
 
+      const clipboard = e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData);
+      if (!clipboard) {
+        console.warn('No clipboardData available on event');
+        return;
+      }
+
+      let fileFound = false;
       for (let i = 0; i < clipboard.items.length; i++) {
         const item = clipboard.items[i];
+        console.log(`Clipboard item [${i}] kind=${item.kind}, type=${item.type}`);
+
         if (item.kind === 'file') {
           const blob = item.getAsFile();
-          if (!blob) continue;
+          if (!blob) {
+            console.warn('item.kind==="file" but getAsFile() returned null');
+            continue;
+          }
+          fileFound = true;
+          console.log('Image file blob detected, size:', blob.size, 'type:', blob.type);
 
           portraitComp.uploadFile([blob])
-            .then(uploaded => portraitComp.setValue(uploaded))
-            .catch(err => console.error('Portrait upload failed:', err));
-          break;
+            .then(uploaded => {
+              console.log('Upload succeeded, uploaded file:', uploaded);
+              portraitComp.setValue(uploaded);
+              console.log('Portrait component value set to uploaded file');
+            })
+            .catch(err => {
+              console.error('Portrait upload failed:', err);
+            });
+          break; // stop after first file
         }
+      }
+      if (!fileFound) {
+        console.log('No file item found in clipboard; perhaps text was pasted instead?');
       }
     });
   });
