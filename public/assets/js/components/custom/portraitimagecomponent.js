@@ -1,57 +1,79 @@
+// public/js/app/custom.js
 
-document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('formio');
-    if (!container) {
-      console.warn('❌ #formio container not found');
+console.log('🛠️ imagecomp.js loaded @', new Date());
+
+(function(){
+  // 1) Monkey-patch Formio.createForm
+  const origCreateForm = Formio.createForm;
+  Formio.createForm = function(el, src, options) {
+    console.log('🐞 Formio.createForm intercepted', el, src, options);
+    return origCreateForm.call(this, el, src, options)
+      .then(form => {
+        console.log('🎉 Form created, form instance:', form);
+        setupClipboardUpload(form);
+        return form;
+      });
+  };
+
+  // 2) If you also use Formio.embed(), patch that too:
+  if (Formio.embed) {
+    const origEmbed = Formio.embed;
+    Formio.embed = function(el, src, options) {
+      console.log('🐞 Formio.embed intercepted', el, src, options);
+      return origEmbed.call(this, el, src, options)
+        .then(form => {
+          console.log('🎉 Form embedded, form instance:', form);
+          setupClipboardUpload(form);
+          return form;
+        });
+    };
+  }
+
+  // 3) Your Cloudinary upload & paste-handler installer
+  function setupClipboardUpload(form) {
+    const portraitComp = form.getComponent('portrait');
+    if (!portraitComp) {
+      console.warn('⚠️ Portrait component not found on this form instance');
       return;
     }
-  
-    container.addEventListener('formio-render', function(evt) {
-      const form = evt.detail.form;
-      console.log('⚙️ formio-render fired, form instance:', form);
-  
-      const portraitComp = form.getComponent('portrait');
-      if (!portraitComp) {
-        console.warn('❌ Portrait component not found');
-        return;
-      }
-      console.log('✔︎ Portrait component ready:', portraitComp);
-  
-      window.addEventListener('paste', function pasteHandler(e) {
-        console.log('📋 Paste event:', e);
-  
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          console.log(` • clipboard item[${i}] kind=${item.kind}, type=${item.type}`);
-          if (item.kind === 'file') {
-            const blob = item.getAsFile();
-            console.log(' → clipboard blob:', blob);
-  
-            // Build Cloudinary upload payload
-            const data = new FormData();
-            data.append('file', blob);
-            data.append('upload_preset', 'lspdbb');  // your unsigned preset
-  
-            fetch('https://api.cloudinary.com/v1_1/djkjdawqi/image/upload', {
-              method: 'POST',
-              body: data
-            })
-            .then(res => res.json())
-            .then(json => {
-              console.log('☁️ Cloudinary response:', json);
-              const url = json.secure_url;
-              // Set the Portrait component’s value to this URL
-              portraitComp.setValue([{ url }]);
-              console.log('✅ portraitComp value set to', url);
-            })
-            .catch(err => console.error('❌ Cloudinary upload error:', err));
-  
-            break; // only handle first file
-          }
+    console.log('✔️ Portrait component ready:', portraitComp);
+
+    // Only install once per form instance
+    if (portraitComp._clipboardHooked) {
+      return;
+    }
+    portraitComp._clipboardHooked = true;
+
+    window.addEventListener('paste', function onPaste(e) {
+      console.log('📋 paste event:', e);
+
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (let item of items) {
+        console.log(' • clipboard item:', item.kind, item.type);
+        if (item.kind === 'file') {
+          const blob = item.getAsFile();
+          console.log(' → got blob:', blob);
+
+          // Upload straight to Cloudinary
+          const data = new FormData();
+          data.append('file', blob);
+          data.append('upload_preset', 'lspdbb');
+
+          fetch('https://api.cloudinary.com/v1_1/djkjdawqi/image/upload', {
+            method: 'POST',
+            body: data
+          })
+          .then(r => r.json())
+          .then(json => {
+            console.log('☁️ Cloudinary response:', json);
+            portraitComp.setValue([{ url: json.secure_url }]);
+            console.log('✅ portraitComp value set to', json.secure_url);
+          })
+          .catch(err => console.error('❌ Cloudinary upload failed:', err));
+
+          break;
         }
-        // If you want multiple pastes in one session remove { once: true }
-      }, { once: true });
+      }
     });
-  });
-  
+  }
+})();
