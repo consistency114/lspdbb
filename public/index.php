@@ -1,23 +1,34 @@
 <?php
 session_start();
-// to this (correct):
 require __DIR__ . '/../includes/config.php';
 
-// Grab just the path (no query string)
+// Only these URL prefixes remain public
+$publicPrefixes = [
+  '/login',
+  '/logout',
+  '/setup',
+  '/assets/',
+  '/includes/',
+  '/cdn/serve.php',
+];
+
+// Figure out the request path (no query string)
 $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// List of public endpoints that never require login
-$whitelist = [
-    '/login',
-    '/logout',
-    '/setup',
-    '/profile',    
-    '/admin',   // <— allow the profile page
-    '/assets',
-    '/includes',
-    '/cdn/serve.php'
-  // add any other static‐only paths you need
-];
+$isPublic = false;
+foreach ($publicPrefixes as $prefix) {
+  if (strpos($requestPath, $prefix) === 0) {
+    $isPublic = true;
+    break;
+  }
+}
+
+// If auth is enabled, and this URL is *not* in the public list, enforce login
+if (ENABLE_AUTH && ! $isPublic && empty($_SESSION['user'])) {
+  header('Location: /login');
+  exit;
+}
+
 
 $isWhitelisted = false;
 foreach ($whitelist as $path) {
