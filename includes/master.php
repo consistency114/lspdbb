@@ -200,7 +200,7 @@ function generate_meta_tags() {
     <script><?php yield_js_vars(); ?></script>
     <script src="<?php echo asset_path('js/common.js'); ?>?v=<?php echo APP_VERSION; ?>"></script>
     <script src="<?php echo asset_path('js/analytics.js'); ?>?v=<?php echo APP_VERSION; ?>"></script>
-    <script src="'. asset_path('js/components/custom/portraitimagecomponent.js') .'"></script>
+    <script src="<?php echo asset_path('js/components/custom/portraitimagecomponent.js'); ?>"></script>
     <?php yield_javascript(); ?>
 </body>
 </html>
