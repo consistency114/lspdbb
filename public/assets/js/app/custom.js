@@ -64,50 +64,37 @@ function getCookie(name) {
 }
 // custom.js
 
-// Wait until the DOM is ready
+// Wait until the form is rendered
 document.addEventListener('DOMContentLoaded', function() {
-  // Replace with your actual form URL or JSON schema variable
-  const formUrl = 'https://yourproject.form.io/yourForm';
+  const container = document.getElementById('formio');
+  if (!container) return;
 
-  // Render the form into the <div id="formio"></div>
-  Formio.createForm(
-    document.getElementById('formio'),
-    formUrl
-  ).then(function(form) {
-    // Get the built-in File component by its key
+  // Listen for the Form.io render event on that container
+  container.addEventListener('formio-render', function(evt) {
+    const form = evt.detail.form;
     const portraitComp = form.getComponent('portrait');
     if (!portraitComp) {
-      console.warn('Portrait component (key="portrait") not found.');
+      console.warn('Portrait component not found');
       return;
     }
 
-    // Listen for paste events anywhere in the window
-    window.addEventListener('paste', function(evt) {
-      const clipboard = evt.clipboardData || evt.originalEvent.clipboardData;
+    // Once the form's up, install your paste→upload logic
+    window.addEventListener('paste', function(e) {
+      const clipboard = e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData);
       if (!clipboard) return;
 
-      // Find the first file item (if any)
       for (let i = 0; i < clipboard.items.length; i++) {
         const item = clipboard.items[i];
         if (item.kind === 'file') {
           const blob = item.getAsFile();
           if (!blob) continue;
 
-          // Upload via the File component’s API
           portraitComp.uploadFile([blob])
-            .then(function(uploaded) {
-              // Set the component’s value to the uploaded file object(s)
-              portraitComp.setValue(uploaded);
-            })
-            .catch(function(err) {
-              console.error('Portrait upload failed:', err);
-            });
-          break; // stop after the first image file
+            .then(uploaded => portraitComp.setValue(uploaded))
+            .catch(err => console.error('Portrait upload failed:', err));
+          break;
         }
       }
     });
-  })
-  .catch(function(err) {
-    console.error('Form.io form error:', err);
   });
 });
