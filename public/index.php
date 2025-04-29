@@ -1,4 +1,19 @@
 <?php
+// public/index.php (or your form‐serving entrypoint)
+session_start();
+
+// Your config file already sets ENABLE_AUTH = true
+require __DIR__ . '/../config.php';
+
+if (ENABLE_AUTH) {
+  // Adjust this to whatever your session key is when you log users in.
+  // Often Reb stores the user record in $_SESSION['user'] or similar.
+  if (empty($_SESSION['user'])) {
+    // Not authenticated—send them to the login page
+    header('Location: /login');
+    exit;
+  }
+}
 /**
  * reBB - Main Entry Point
  *
