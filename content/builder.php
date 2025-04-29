@@ -1,4 +1,14 @@
 <?php
+
+session_start();
+require __DIR__ . '/../includes/config.php';
+
+// If auth is enabled, and there’s no logged‐in user, kick them to /login
+if (ENABLE_AUTH && empty($_SESSION['user'])) {
+  header('Location: /login');
+  exit;
+}
+
 /**
  * reBB - Builder
  *
