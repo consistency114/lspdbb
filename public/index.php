@@ -8,11 +8,14 @@ $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // List of public endpoints that never require login
 $whitelist = [
-  '/login',
-  '/setup',
-  '/includes',
-  '/assets',    // if you serve CSS/JS/images here
-  '/cdn/serve.php',  // if you load JSON schemas
+    '/login',
+    '/logout',
+    '/setup',
+    '/profile',    
+    '/admin',   // <— allow the profile page
+    '/assets',
+    '/includes',
+    '/cdn/serve.php'
   // add any other static‐only paths you need
 ];
 
