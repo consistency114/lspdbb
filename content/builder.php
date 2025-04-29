@@ -445,8 +445,6 @@ if ($useBasicBuilder) { // Check the boolean variable directly
     // Standard FormIO builder
     $GLOBALS['page_javascript'] = '
 
-    <script src="'. asset_path('js/components/custom/portraitimagecomponent.js') .'"></script>
-
     <script src="'. asset_path('js/components/components.js') .'?v=' . APP_VERSION . '"></script>
 
     <script src="'. asset_path('js/app/editor.js') .'?v=' . APP_VERSION . '"></script>
