@@ -1,3 +1,4 @@
+console.log('🛠️ custom.js is running!', new Date());
 /**
  * custom.js - Custom Utility Functions
  * 
@@ -62,6 +63,9 @@ function getCookie(name) {
     }
     return null;
 }
+
+console.log('🛠️ custom.js is still running!', new Date());
+
 // public/js/custom.js
 
 document.addEventListener('DOMContentLoaded', function() {
