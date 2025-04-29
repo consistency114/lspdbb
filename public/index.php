@@ -1,19 +1,39 @@
 <?php
-// public/index.php (or your form‐serving entrypoint)
 session_start();
-
-// Your config file already sets ENABLE_AUTH = true
 require __DIR__ . '/../config.php';
 
-if (ENABLE_AUTH) {
-  // Adjust this to whatever your session key is when you log users in.
-  // Often Reb stores the user record in $_SESSION['user'] or similar.
+// Grab just the path (no query string)
+$requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// List of public endpoints that never require login
+$whitelist = [
+  '/login',
+  '/setup',
+  '/assets',    // if you serve CSS/JS/images here
+  '/cdn/serve.php',  // if you load JSON schemas
+  // add any other static‐only paths you need
+];
+
+$isWhitelisted = false;
+foreach ($whitelist as $path) {
+  if (strpos($requestPath, $path) === 0) {
+    $isWhitelisted = true;
+    break;
+  }
+}
+
+if (ENABLE_AUTH && ! $isWhitelisted) {
   if (empty($_SESSION['user'])) {
-    // Not authenticated—send them to the login page
+    // Not logged in, redirect to the login form
     header('Location: /login');
     exit;
   }
 }
+
+// From here on you’re either on a whitelisted URL
+// or you have a valid $_SESSION['user'], so render normally…
+
+
 /**
  * reBB - Main Entry Point
  *
