@@ -1,13 +1,10 @@
 <?php
 
-session_start();
-require __DIR__ . '/../includes/config.php';
+auth()->requireRole('user', 'login');
 
-// If auth is enabled, and there’s no logged‐in user, kick them to /login
-if (ENABLE_AUTH && empty($_SESSION['user'])) {
-  header('Location: /login');
-  exit;
-}
+// Since we've passed the auth check, we can safely get the current user
+$currentUser = auth()->getUser();
+
 /**
  * reBB – Form Renderer  (JS-scan disabled)
  *
