@@ -1,43 +1,4 @@
 <?php
-// =================================================================
-// Force PHPSESSID cookie to cover every path on your domain:
-session_set_cookie_params([
-  'lifetime' => 0,                     // expire on browser close
-  'path'     => '/',                   // valid for all URLs
-  'domain'   => parse_url(SITE_URL, PHP_URL_HOST),
-  'secure'   => (parse_url(SITE_URL, PHP_URL_SCHEME) === 'https'),
-  'httponly' => true,
-  'samesite' => 'Lax',
-]);
-
-// Start (or resume) the session
-session_start();
-
-// Whitelist only truly public paths:
-$requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$publicPrefixes = [
-  '/login',
-  '/logout',
-  '/setup',
-  '/assets/',
-  '/includes/',
-  '/cdn/serve.php',
-];
-
-$isPublic = false;
-foreach ($publicPrefixes as $prefix) {
-  if (strpos($requestPath, $prefix) === 0) {
-    $isPublic = true;
-    break;
-  }
-}
-
-// If auth’s on, and this URL isn’t public, require login
-if (ENABLE_AUTH && ! $isPublic && empty($_SESSION['user'])) {
-  header('Location: /login');
-  exit;
-}
-
 
 /**
  * Master layout template
