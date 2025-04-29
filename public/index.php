@@ -1,6 +1,7 @@
 <?php
 session_start();
-require __DIR__ . '/../config.php';
+// to this (correct):
+require __DIR__ . '/../includes/config.php';
 
 // Grab just the path (no query string)
 $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
