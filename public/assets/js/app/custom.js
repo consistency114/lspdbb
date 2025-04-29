@@ -64,84 +64,59 @@ function getCookie(name) {
 }
 // public/js/custom.js
 
-// (1) Global holders
-window.myFormInstance = null;
-window.initClipboardUpload = function(form) {
-  console.log('🔧 initClipboardUpload called with form:', form);
-  const portraitComp = form.getComponent('portrait');
-  console.log('→ portraitComp:', portraitComp);
-  // (re)attach your paste handler here, if you want.
-};
-
-// (2) Hook into formio-render and call the init function
-document.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('formio');
-  container.addEventListener('formio-render', evt => {
-    window.myFormInstance = evt.detail.form;
-    console.log('📦 formio-render fired, stored form in window.myFormInstance');
-    // call it automatically too:
-    window.initClipboardUpload(evt.detail.form);
-  });
-});
-
-// custom.js
-
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('formio');
   if (!container) {
-    console.warn('Form container #formio not found');
+    console.warn('❌ #formio container not found');
     return;
   }
 
   container.addEventListener('formio-render', function(evt) {
     const form = evt.detail.form;
-    console.log('Form.io render event fired, form instance:', form);
+    console.log('⚙️ formio-render fired, form instance:', form);
 
     const portraitComp = form.getComponent('portrait');
     if (!portraitComp) {
-      console.warn('Portrait component (key="portrait") not found');
+      console.warn('❌ Portrait component not found');
       return;
     }
-    console.log('Portrait component found:', portraitComp);
+    console.log('✔︎ Portrait component ready:', portraitComp);
 
-    window.addEventListener('paste', function(e) {
-      console.log('Paste event detected:', e);
+    window.addEventListener('paste', function pasteHandler(e) {
+      console.log('📋 Paste event:', e);
 
-      const clipboard = e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData);
-      if (!clipboard) {
-        console.warn('No clipboardData available on event');
-        return;
-      }
-
-      let fileFound = false;
-      for (let i = 0; i < clipboard.items.length; i++) {
-        const item = clipboard.items[i];
-        console.log(`Clipboard item [${i}] kind=${item.kind}, type=${item.type}`);
-
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        console.log(` • clipboard item[${i}] kind=${item.kind}, type=${item.type}`);
         if (item.kind === 'file') {
           const blob = item.getAsFile();
-          if (!blob) {
-            console.warn('item.kind==="file" but getAsFile() returned null');
-            continue;
-          }
-          fileFound = true;
-          console.log('Image file blob detected, size:', blob.size, 'type:', blob.type);
+          console.log(' → clipboard blob:', blob);
 
-          portraitComp.uploadFile([blob])
-            .then(uploaded => {
-              console.log('Upload succeeded, uploaded file:', uploaded);
-              portraitComp.setValue(uploaded);
-              console.log('Portrait component value set to uploaded file');
-            })
-            .catch(err => {
-              console.error('Portrait upload failed:', err);
-            });
-          break; // stop after first file
+          // Build Cloudinary upload payload
+          const data = new FormData();
+          data.append('file', blob);
+          data.append('upload_preset', 'lspdbb');  // your unsigned preset
+
+          fetch('https://api.cloudinary.com/v1_1/djkjdawqi/image/upload', {
+            method: 'POST',
+            body: data
+          })
+          .then(res => res.json())
+          .then(json => {
+            console.log('☁️ Cloudinary response:', json);
+            const url = json.secure_url;
+            // Set the Portrait component’s value to this URL
+            portraitComp.setValue([{ url }]);
+            console.log('✅ portraitComp value set to', url);
+          })
+          .catch(err => console.error('❌ Cloudinary upload error:', err));
+
+          break; // only handle first file
         }
       }
-      if (!fileFound) {
-        console.log('No file item found in clipboard; perhaps text was pasted instead?');
-      }
-    });
+      // If you want multiple pastes in one session remove { once: true }
+    }, { once: true });
   });
 });
+
