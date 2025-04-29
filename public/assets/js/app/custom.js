@@ -62,7 +62,28 @@ function getCookie(name) {
     }
     return null;
 }
-// custom.js
+// public/js/custom.js
+
+// (1) Global holders
+window.myFormInstance = null;
+window.initClipboardUpload = function(form) {
+  console.log('🔧 initClipboardUpload called with form:', form);
+  const portraitComp = form.getComponent('portrait');
+  console.log('→ portraitComp:', portraitComp);
+  // (re)attach your paste handler here, if you want.
+};
+
+// (2) Hook into formio-render and call the init function
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('formio');
+  container.addEventListener('formio-render', evt => {
+    window.myFormInstance = evt.detail.form;
+    console.log('📦 formio-render fired, stored form in window.myFormInstance');
+    // call it automatically too:
+    window.initClipboardUpload(evt.detail.form);
+  });
+});
+
 // custom.js
 
 document.addEventListener('DOMContentLoaded', function() {
