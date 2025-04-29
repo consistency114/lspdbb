@@ -1,6 +1,6 @@
 <?php
 
-auth()->requireRole('user', 'login');
+auth()->requireRole('admin', 'login');
 $currentUser = auth()->getUser();
 
 /**

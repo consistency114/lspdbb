@@ -1,6 +1,6 @@
 <?php
 
-auth()->requireRole('user', 'login');
+auth()->requireRole(['user','admin'], 'login');
 
 // Since we've passed the auth check, we can safely get the current user
 $currentUser = auth()->getUser();
