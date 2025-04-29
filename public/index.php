@@ -9,6 +9,7 @@ $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $whitelist = [
   '/login',
   '/setup',
+  '/includes',
   '/assets',    // if you serve CSS/JS/images here
   '/cdn/serve.php',  // if you load JSON schemas
   // add any other static‐only paths you need
