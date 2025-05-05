@@ -1,5 +1,62 @@
 <?php
-/**
+/* ------------------------------------------------------------------ */
+/*  Silent-SSO from main phpBB forum  (put this just after common.php)*/
+/* ------------------------------------------------------------------ */
+
+const PHPBB_CONFIG = '/absolute/path/to/phpbb/config.php';  // << adjust
+const GROUP_ALLOW  = [8, 9, 10, 11, 12];                   // ⇦ ids allowed
+const MAX_SESSION_AGE = 900;   // 15 min
+
+if (isset($_GET['sid']) && preg_match('/^[a-f0-9]{32}$/', $_GET['sid'])) {
+    $sid  = $_GET['sid'];
+    $goto = isset($_GET['goto']) ? $_GET['goto'] : site_url('profile');
+
+    /* --- boot phpBB just enough to get $db and $table_prefix --------- */
+    require_once PHPBB_CONFIG;             // gives $dbhost $dbname $dbuser $dbpasswd $table_prefix
+    $dsn  = "mysql:host=$dbhost;dbname=$dbname;charset=utf8mb4";
+    $pdo  = new PDO($dsn, $dbuser, $dbpasswd, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+
+    /* 1 ▸ find the session ------------------------------------------- */
+    $row = $pdo->prepare("SELECT session_user_id AS uid, session_time
+                            FROM {$table_prefix}sessions
+                           WHERE session_id = ? LIMIT 1");
+    $row->execute([$sid]);
+    $row = $row->fetch(PDO::FETCH_ASSOC);
+
+    if ($row &&
+        time() - (int)$row['session_time'] <= MAX_SESSION_AGE &&
+        ($uid = (int)$row['uid']) > 1) {
+
+        /* 2 ▸ is the user in one of the allowed groups? --------------- */
+        $in = str_repeat('?,', count(GROUP_ALLOW) - 1) . '?';
+        $st = $pdo->prepare("SELECT 1 FROM {$table_prefix}user_group
+                              WHERE user_id = ? AND group_id IN ($in)
+                                AND user_pending = 0 LIMIT 1");
+        $st->execute(array_merge([$uid], GROUP_ALLOW));
+
+        if ($st->fetchColumn()) {
+            /* 3 ▸ we trust the user — create / reuse local account ----- */
+            // many apps expose something like forceLogin($externalId)
+            // adapt the two calls below to *your* auth layer:
+
+            if (!auth()->userExists("phpbb:$uid")) {
+                // pull minimal profile from phpBB or create a stub
+                $u = $pdo->prepare("SELECT username, user_email FROM {$table_prefix}users WHERE user_id=?");
+                $u->execute([$uid]);
+                $info = $u->fetch(PDO::FETCH_ASSOC) ?: ['username'=>"phpbb_$uid", 'user_email'=>''];
+                auth()->createUser([
+                    'external_id' => "phpbb:$uid",
+                    'name'        => $info['username'],
+                    'email'       => $info['user_email'],
+                ]);
+            }
+            auth()->forceLogin("phpbb:$uid");   // ← single line log-in
+
+            header("Location: $goto");
+            exit;
+        }
+    }
+}/**
  * reBB - Login Page
  * 
  * This file handles user login - no authentication required to access.

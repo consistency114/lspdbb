@@ -1,7 +1,7 @@
 {
   "title": "LSPDPIR",
   "collapsible": false,
-  "key": "PANEL_1398I5",
+  "key": "PANEL_101M840",
   "uniqueKey": false,
   "disableWildcard": false,
   "type": "panel",
@@ -10,10 +10,10 @@
   "tableView": false,
   "components": [
     {
-      "html": "<p style=\"text-align:center;\">LOS SANTOS POLICE DEPARTMENT - GANGS AND NARCOTICS DIVISIOn</p><p style=\"text-align:center;\"><strong>PERSON OF INTEREST REPORT</strong></p>",
+      "html": "<p style=\"text-align:center;\">LOS SANTOS POLICE DEPARTMENT - GANGS AND NARCOTICS DIVISION</p><p style=\"text-align:center;\"><span class=\"text-big\"><strong>PERSON OF INTEREST REPORT</strong></span></p>",
       "label": "Content",
       "refreshOnChange": false,
-      "key": "CONTENT_429OWZ4",
+      "key": "CONTENT_890BX",
       "uniqueKey": false,
       "disableWildcard": false,
       "type": "content",
@@ -22,20 +22,43 @@
     },
     {
       "label": "Portrait",
-      "key": "portrait",
-      "type": "file",
+      "tableView": true,
       "storage": "url",
       "image": true,
       "uploadOnly": true,
+      "webcam": false,
+      "capture": false,
+      "fileTypes": [
+        {
+          "label": "",
+          "value": ""
+        }
+      ],
       "filePattern": "image/*",
       "persistent": "server",
-      "tableView": true,
-      "input": true,
+      "validateWhenHidden": false,
+      "key": "PORTRAIT_150D8T",
+      "uniqueKey": false,
+      "disableWildcard": false,
+      "type": "file",
       "url": "https://api.cloudinary.com/v1_1/djkjdawqi/image/upload?upload_preset=lspdbb",
       "fileKey": "file",
       "imageSize": "50",
-      "valueProperty": "secure_url",
-      "validateWhenHidden": false
+      "input": true,
+      "valueProperty": "secure_url"
+    },
+    {
+      "label": "BBCode Portrait",
+      "applyMaskOn": "change",
+      "tableView": false,
+      "clearOnHide": false,
+      "calculateValue": "var f = data.portrait;\n// if it's an array, grab the first file object\nif (Array.isArray(f)) f = f[0] || {};\n// f may now be an object or a string\nvar url = (typeof f === 'object') ? (f.secure_url || f.url || '') : f;\nreturn '[img]' + url + '[/img]';",
+      "validateWhenHidden": false,
+      "key": "bbcodeportraitcode",
+      "uniqueKey": true,
+      "disableWildcard": false,
+      "type": "textfield",
+      "input": true
     },
     {
       "label": "Columns",
@@ -207,11 +230,10 @@
             },
             {
               "label": "SUBSET",
-              "placeholder": "First Last",
               "applyMaskOn": "change",
               "tableView": true,
               "validateWhenHidden": false,
-              "key": "SUBSET_350JE3",
+              "key": "SUBSET_1315MDR",
               "uniqueKey": false,
               "disableWildcard": false,
               "type": "textfield",
@@ -316,14 +338,19 @@
       "inputType": "checkbox"
     },
     {
-      "type": "textarea",
       "label": "BBCode Gang Criteria",
-      "key": "bbcodeGangCriteria",
-      "input": true,
+      "applyMaskOn": "change",
+      "autoExpand": false,
+      "hidden": true,
       "tableView": false,
       "clearOnHide": false,
-      "hidden": true,
-      "calculateValue": "var o = data.SELECT_BOXES_516C25O;\n\nvar sentences = [\n  \"Person has admitted to being a gang member (self-admission)\",\n  \"Person has been arrested with known gang members for a serious felony or violent felony\",\n  \"Person has been identified as a gang member by a reliable, confidential informant registered by the law enforcement agency\",\n  \"Person has been documented displaying gang symbols and/or hand signs\",\n  \"Person has been documented affiliating with recorded gang members\",\n  \"Person has been documented having gang tattoos\"\n];\n\nvar markers = [\n  (o.admission   ? \"[cbf]\" : \"[cb]\"),\n  (o.arrest      ? \"[cbf]\" : \"[cb]\"),\n  (o.informant   ? \"[cbf]\" : \"[cb]\"),\n  (o.symbols     ? \"[cbf]\" : \"[cb]\"),\n  (o.affiliation ? \"[cbf]\" : \"[cb]\"),\n  (o.tattoos     ? \"[cbf]\" : \"[cb]\")\n];\n\nreturn (\n  \"[indent=25]\\n\" +\n  \"[aligntable=left,300,0,20,0,transparent,transparent]\\n\" +\n  sentences.join(\"\\n\") +\n  \"\\n[/aligntable]\\n\\n\" +\n  \"[aligntable=left,0,0,0,0,transparent,transparent][indent=30]\\n\" +\n  markers.join(\"\\n\") +\n  \"\\n[/indent][/aligntable]\\n\" +\n  \"[/indent]\"\n);"
+      "calculateValue": "var o = data.SELECT_BOXES_516C25O;\n\nvar sentences = [\n  \"Person has admitted to being a gang member (self-admission)\",\n  \"Person has been arrested with known gang members for a serious felony or violent felony\",\n  \"Person has been identified as a gang member by a reliable, confidential informant registered by the law enforcement agency\",\n  \"Person has been documented displaying gang symbols and/or hand signs\",\n  \"Person has been documented affiliating with recorded gang members\",\n  \"Person has been documented having gang tattoos\"\n];\n\nvar markers = [\n  (o.admission   ? \"[cbf]\" : \"[cb]\"),\n  (o.arrest      ? \"[cbf]\" : \"[cb]\"),\n  (o.informant   ? \"[cbf]\" : \"[cb]\"),\n  (o.symbols     ? \"[cbf]\" : \"[cb]\"),\n  (o.affiliation ? \"[cbf]\" : \"[cb]\"),\n  (o.tattoos     ? \"[cbf]\" : \"[cb]\")\n];\n\nreturn (\n  \"[indent=25]\\n\" +\n  \"[aligntable=left,300,0,20,0,transparent,transparent]\\n\" +\n  sentences.join(\"\\n\") +\n  \"\\n[/aligntable]\\n\\n\" +\n  \"[aligntable=left,0,0,0,0,transparent,transparent][indent=30]\\n\" +\n  markers.join(\"\\n\") +\n  \"\\n[/indent][/aligntable]\\n\" +\n  \"[/indent]\"\n);",
+      "validateWhenHidden": false,
+      "key": "BBCODE_GANG_CRITERIA",
+      "uniqueKey": true,
+      "disableWildcard": false,
+      "type": "textarea",
+      "input": true
     },
     {
       "label": "Columns",
@@ -362,12 +389,27 @@
                 }
               ],
               "validateWhenHidden": false,
-              "key": "HAS_THE_PERSON_BEEN_INFORMED_OF_THIS_SUBMISSION_355296G1",
-              "uniqueKey": false,
+              "key": "informedofsubmission",
+              "uniqueKey": true,
               "disableWildcard": false,
               "type": "selectboxes",
               "input": true,
               "inputType": "checkbox"
+            },
+            {
+              "label": "informedofsubmissioncode",
+              "applyMaskOn": "change",
+              "autoExpand": false,
+              "hidden": true,
+              "tableView": false,
+              "clearOnHide": false,
+              "calculateValue": "var o = data.informedofsubmission || {};\r\nvar lines = [];\r\nlines.push((o.yes ? '[cbf]' : '[cb]') + ' Yes');\r\nlines.push((o.no  ? '[cbf]' : '[cb]') + ' No');\r\nreturn lines.join('\\n');\r\n",
+              "validateWhenHidden": false,
+              "key": "informedsubmissioncode",
+              "uniqueKey": true,
+              "disableWildcard": false,
+              "type": "textarea",
+              "input": true
             },
             {
               "label": "Date / Time",
@@ -416,12 +458,12 @@
                         "values": [
                           {
                             "label": "LSPD",
-                            "value": "lspd"
+                            "value": "LSPD"
                           }
                         ]
                       },
                       "validateWhenHidden": false,
-                      "key": "AGENCY_290DJTG2",
+                      "key": "AGENCY_135K8TB",
                       "uniqueKey": false,
                       "disableWildcard": false,
                       "type": "select",
@@ -435,24 +477,24 @@
                         "values": [
                           {
                             "label": "GND",
-                            "value": "gnd"
+                            "value": "GND"
                           },
                           {
                             "label": "HARBOR",
-                            "value": "harbor"
+                            "value": "HARBOR"
                           },
                           {
                             "label": "VICTORIA",
-                            "value": "victoria"
+                            "value": "VICTORIA"
                           },
                           {
                             "label": "METRO",
-                            "value": "metro"
+                            "value": "METRO"
                           }
                         ]
                       },
                       "validateWhenHidden": false,
-                      "key": "DIVISION_26744ET2",
+                      "key": "DIVISION_142HUGB",
                       "uniqueKey": false,
                       "disableWildcard": false,
                       "type": "select",
@@ -580,12 +622,27 @@
                 }
               ],
               "validateWhenHidden": false,
-              "key": "SUBMISSION_RESPECTS_THE_CRITERIA_SET_FORTH_BY_THE_CRASH_ACT__423A_B_C__352YSXQ1",
-              "uniqueKey": false,
+              "key": "informedofcrashact",
+              "uniqueKey": true,
               "disableWildcard": false,
               "type": "selectboxes",
               "input": true,
               "inputType": "checkbox"
+            },
+            {
+              "label": "informedofcrashactcode",
+              "applyMaskOn": "change",
+              "autoExpand": false,
+              "hidden": true,
+              "tableView": false,
+              "clearOnHide": false,
+              "calculateValue": "var o = data.informedofcrashact || {};\r\nvar lines = [];\r\nlines.push((o.yes ? '[cbf]' : '[cb]') + ' Yes');\r\nlines.push((o.no  ? '[cbf]' : '[cb]') + ' No');\r\nreturn lines.join('\\n');\r\n",
+              "validateWhenHidden": false,
+              "key": "informedofcrashactcode",
+              "uniqueKey": true,
+              "disableWildcard": false,
+              "type": "textarea",
+              "input": true
             },
             {
               "label": "Date / Time",
@@ -634,12 +691,12 @@
                         "values": [
                           {
                             "label": "LSPD",
-                            "value": "lspd"
+                            "value": "LSPD"
                           }
                         ]
                       },
                       "validateWhenHidden": false,
-                      "key": "AGENCY_290DJTG3",
+                      "key": "AGENCY_160875B",
                       "uniqueKey": false,
                       "disableWildcard": false,
                       "type": "select",
@@ -653,24 +710,24 @@
                         "values": [
                           {
                             "label": "GND",
-                            "value": "gnd"
+                            "value": "GND"
                           },
                           {
                             "label": "HARBOR",
-                            "value": "harbor"
+                            "value": "HARBOR"
                           },
                           {
                             "label": "VICTORIA",
-                            "value": "victoria"
+                            "value": "VICTORIA"
                           },
                           {
                             "label": "METRO",
-                            "value": "metro"
+                            "value": "METRO"
                           }
                         ]
                       },
                       "validateWhenHidden": false,
-                      "key": "DIVISION_26744ET3",
+                      "key": "DIVISION_168YMGP",
                       "uniqueKey": false,
                       "disableWildcard": false,
                       "type": "select",
@@ -684,11 +741,11 @@
                         "values": [
                           {
                             "label": "GED",
-                            "value": "ged"
+                            "value": "GED"
                           },
                           {
                             "label": "GSS",
-                            "value": "gss"
+                            "value": "GSS"
                           },
                           {
                             "label": "",
@@ -697,7 +754,7 @@
                         ]
                       },
                       "validateWhenHidden": false,
-                      "key": "DETAIL_2883W8S3",
+                      "key": "DETAIL_173OCFN",
                       "uniqueKey": false,
                       "disableWildcard": false,
                       "type": "select",
@@ -771,6 +828,96 @@
       "type": "columns",
       "input": false,
       "tableView": false
+    },
+    {
+      "label": "Generate police.lsgov.us code",
+      "showValidations": false,
+      "size": "lg",
+      "block": true,
+      "disableOnInvalid": true,
+      "tableView": false,
+      "key": "submit",
+      "uniqueKey": false,
+      "disableWildcard": false,
+      "type": "button",
+      "input": true,
+      "saveOnEnter": false
     }
   ]
 }
+
+// BBCODE
+[center][img]https://i.imgur.com/caU4GZr.png[/img]
+
+
+[b]SAN ANDREAS STATE GANG DATABASE[/b]
+PERSON OF INTEREST FILE[/center]
+
+[divbox=#000000][color=#FFFFFF]DEMOGRAPHIC INFORMATION[/color][/divbox]
+
+[center]
+{bbcodeportraitcode}
+[/center]
+
+
+
+[indent=25]
+[b]FULL NAME[/b] {FULL_NAME_340QQD1}
+[b]ALIAS / MONIKER[/b] {ALIASMONKIER_578IWW1}
+
+[b]SEX[/b] {SEX_75RM2Z1}
+[b]AGE[/b] {AGE_9NNJF}
+
+[b]ADDRESS[/b] {ADDRESS_193Y9Y2}
+[b]PHONE NUMBER[/b] {PHONE_221RHGC1}
+[/indent]
+
+[divbox=#000000][color=#FFFFFF]GANG INFORMATION[/color][/divbox]
+
+[indent=25]
+[b]GANG[/b] {GANG_NAME_666VVP9}
+[b]SUBSET[/b] {SUBSET_350JE3}
+
+[b]THREAT LEVEL[/b] {THREAT_LEVEL_465ALGB}
+[/indent]
+
+[divbox=#000000][color=#FFFFFF]GANG AFFILIATION CRITERIA[/color][/divbox]
+{BBCODE_GANG_CRITERIA}
+
+
+
+
+
+
+
+
+[divbox=#000000][color=#FFFFFF]ADMINISTRATIVE CHECKLIST[/color][/divbox]
+
+
+[indent=25]
+HAS THE PERSON BEEN INFORMED OF THIS SUBMISSION?
+{informedsubmissioncode}
+
+[b]DATE OF REPORT[/b] {DATE__TIME_217GU2A2}
+[b]AGENCY[/b] {AGENCY_290DJTG2}
+[b]DIVISION[/b] {DIVISION_26744ET2}
+[b]DETAIL[/b] {DETAIL_2883W8S2}
+
+[b]LAST NAME[/b] {LAST_NAME_298HIN7}
+[b]SERIAL NO.[/b] {SERIAL_NO_147P7M}
+[/indent]
+
+[divbox=#000000][color=#FFFFFF]AUDIT CHECKLIST (SUPERVISORS ONLY)[/color][/divbox]
+
+[indent=25]
+SUBMISSION RESPECTS THE CRITERIA SET FORTH BY THE CRASH ACT, § 423(a) (b) (c) ?
+{informedcrashactcode}
+
+[b]DATE OF REVIEW[/b] {DATE__TIME_217GU2A3}
+[b]AGENCY[/b] {AGENCY_290DJTG3}
+[b]DIVISION[/b] {DIVISION_26744ET3}
+[b]DETAIL[/b] {DETAIL_2883W8S3}
+
+[b]LAST NAME[/b] {LAST_NAME_298HIN8}
+[b]SERIAL NO.[/b] {SERIAL_NO_18WQFD}
+[/indent]
