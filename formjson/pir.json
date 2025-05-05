@@ -1,7 +1,7 @@
 {
   "title": "LSPDPIR",
   "collapsible": false,
-  "key": "PANEL_101M840",
+  "key": "PANEL_12KB5W",
   "uniqueKey": false,
   "disableWildcard": false,
   "type": "panel",
@@ -37,8 +37,8 @@
       "filePattern": "image/*",
       "persistent": "server",
       "validateWhenHidden": false,
-      "key": "PORTRAIT_150D8T",
-      "uniqueKey": false,
+      "key": "portrait",
+      "uniqueKey": true,
       "disableWildcard": false,
       "type": "file",
       "url": "https://api.cloudinary.com/v1_1/djkjdawqi/image/upload?upload_preset=lspdbb",
@@ -828,6 +828,21 @@
       "type": "columns",
       "input": false,
       "tableView": false
+    },
+    {
+      "type": "password",
+      "label": "Form Password",
+      "key": "FORM_PASSWORD_540I7A",
+      "input": true,
+      "protected": true,
+      "tableView": false,
+      "validateWhenHidden": false,
+      "validate": {
+        "required": true,
+        "custom": "valid = input === 'lspd!25';",
+        "customPrivate": true,
+        "customMessage": "Incorrect password"
+      }
     },
     {
       "label": "Generate police.lsgov.us code",
