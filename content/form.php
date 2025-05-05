@@ -1,15 +1,9 @@
 <?php
-  // Only inject on form pages
-  if (isset($_GET['f'])) {
-    $secret = getenv('FORM_PASSWORD') ?: '';
-    // Ensure $GLOBALS['page_js_vars'] is initialized as a string
-    if (!isset($GLOBALS['page_js_vars'])) {
-        $GLOBALS['page_js_vars'] = '';
-    }
-    // Append the global JS variable without overwriting
-    $GLOBALS['page_js_vars'] .= "window.__FORM_PASSWORD__ = " . json_encode($secret) . ";";
-  }
-
+  // In includes/master.php, before the closing </head> or wherever you yield_js_vars()
+  $secret = getenv('FORM_PASSWORD') ?: '';
+  // Only the assignment, no <script> tags
+  $GLOBALS['page_js_vars'] = "window.__FORM_PASSWORD__ = " . json_encode($secret) . ";";
+?>
 // Since we've passed the auth check, we can safely get the current user
 $currentUser = auth()->getUser();
 
