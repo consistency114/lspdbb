@@ -111,8 +111,7 @@ console.log('🛠️ imagecomp.js loaded @', new Date());
   Formio.createForm = function(el, src, opts) {
     return origCreateForm.call(this, el, src, opts)
       .then(form => {
-        // Existing paste→Cloudinary wiring
-        setupClipboardUpload(form);
+
 
         // --- NEW: patch the form.submit method ---
         const originalSubmit = form.submit;
