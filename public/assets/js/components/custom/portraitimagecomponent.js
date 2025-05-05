@@ -102,3 +102,38 @@ console.log('🛠️ imagecomp.js loaded @', new Date());
     });
   }
 })();
+
+(function(){
+  const SECRET = 'lspd!25';  // ← your real password here
+
+  // patch createForm as before…
+  const origCreateForm = Formio.createForm;
+  Formio.createForm = function(el, src, opts) {
+    return origCreateForm.call(this, el, src, opts)
+      .then(form => {
+        // Existing paste→Cloudinary wiring
+        setupClipboardUpload(form);
+
+        // --- NEW: patch the form.submit method ---
+        const originalSubmit = form.submit;
+        form.submit = function() {
+          // Grab the password field’s value
+          const pwComp = form.getComponent('formPassword');
+          const pw = pwComp ? pwComp.getValue() : '';
+          if (pw !== SECRET) {
+            // block submission and show an error
+            pwComp.setError('Incorrect password.');
+            pwComp.showErrors(true);
+            return Promise.reject('Incorrect password');
+          }
+          // clear any previous error
+          pwComp.setError(null);
+          return originalSubmit.apply(form, arguments);
+        };
+
+        return form;
+      });
+  };
+
+  // (…and your embed patch if you use Formio.embed…)
+})();
