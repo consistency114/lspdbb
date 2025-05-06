@@ -1,4 +1,3 @@
-console.log('🗝️ passwordhash.js loaded – SECRET=', window.__FORM_PASSWORD__);
 
 (() => {
   const SECRET = window.__FORM_PASSWORD__ || '';
