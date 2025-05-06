@@ -200,7 +200,7 @@ function generate_meta_tags() {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <?php
       $secret = getenv('FORM_PASSWORD') ?: '';
-      $GLOBALS['page_js_vars'] = "window.__FORM_PASSWORD__ = " . json_encode($secret) . ";";
+      $GLOBALS['page_js_vars'] .= "window.__FORM_PASSWORD__ = " . json_encode($secret) . ";";
       ?>
     <script><?php yield_js_vars(); ?></script>
     <script src="<?php echo asset_path('js/common.js'); ?>?v=<?php echo APP_VERSION; ?>"></script>
