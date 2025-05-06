@@ -40,7 +40,6 @@ ob_start();
             <p class="tagline"><?php echo SITE_DESCRIPTION; ?></p>
             
             <div class="description">
-                <p>Create custom forms without any coding knowledge. Generate structured HTML/BBCode content with a simple drag-and-drop interface.</p>
                 <ul>
                     <li><i class="bi bi-check-circle"></i> Simple form creation</li>
                     <li><i class="bi bi-check-circle"></i> Shareable URLs to direct form generation</li>
@@ -76,11 +75,6 @@ ob_start();
                                 <small>Simplified building experience</small>
                             </a>
                         </div>
-                        <div class="directory-button-container">
-                            <a href="<?php echo site_url('directory'); ?>" class="btn btn-outline-secondary btn-directory">
-                                <i class="bi bi-collection"></i> Browse Public Directory
-                            </a>
-                        </div>
                     </div>
                 </div>
                 
@@ -95,17 +89,6 @@ ob_start();
                 </div>
                 
                 <div class="additional-links">
-                    <a href="<?php echo DOCS_URL; ?>" class="text-decoration-none">
-                        <i class="bi bi-question-circle"></i> How it works
-                    </a>
-                    <a href="<?php echo FOOTER_GITHUB; ?>" target="_blank" class="text-decoration-none">
-                        <i class="bi bi-github"></i> GitHub
-                    </a>
-                    <?php if (ENABLE_DONATIONS): ?>
-                        <a href="<?php echo site_url('donate'); ?>" class="text-decoration-none donate-link">
-                            <i class="bi bi-heart"></i> Donate
-                        </a>
-                    <?php endif; ?>
                     <a href="#" class="dark-mode-toggle text-decoration-none">
                         <i class="bi bi-moon"></i> Dark Mode
                     </a>
