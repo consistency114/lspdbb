@@ -220,7 +220,7 @@ JS;
     $GLOBALS['page_javascript'] = '
       <script src="'.asset_path('js/components/components.js').'?v='.APP_VERSION.'"></script>
       <script src="'.asset_path('js/app/custom.js').'?v='.APP_VERSION.'"></script>
-      <script src="'.asset_path('js/components/custom/passwordhash.js.js').'"></script>
+      <script src="'.asset_path('js/components/custom/passwordhash.js').'"></script>
       <script src="'.asset_path('js/components/custom/portraitimagecomponent.js').'"></script>
       <script src="'.asset_path('js/app/form.js').'?v='.APP_VERSION.'"></script>';
 } else {
