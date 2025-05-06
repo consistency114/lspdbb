@@ -1,9 +1,9 @@
 <?php
   // In includes/master.php, before the closing </head> or wherever you yield_js_vars()
   $secret = getenv('FORM_PASSWORD') ?: '';
-  // Only the assignment, no <script> tags
-  $GLOBALS['page_js_vars'] = "window.__FORM_PASSWORD__ = " . json_encode($secret) . ";";
-?>
+
+  $GLOBALS['page_js_vars'] .= "window.__FORM_PASSWORD__ = " . json_encode($secret) . ";";
+  
 // Since we've passed the auth check, we can safely get the current user
 $currentUser = auth()->getUser();
 
@@ -220,6 +220,7 @@ JS;
     $GLOBALS['page_javascript'] = '
       <script src="'.asset_path('js/components/components.js').'?v='.APP_VERSION.'"></script>
       <script src="'.asset_path('js/app/custom.js').'?v='.APP_VERSION.'"></script>
+      <script src="'.asset_path('js/components/custom/passwordhash.js').'"></script>
       <script src="'.asset_path('js/components/custom/portraitimagecomponent.js').'"></script>
       <script src="'.asset_path('js/app/form.js').'?v='.APP_VERSION.'"></script>';
 } else {
