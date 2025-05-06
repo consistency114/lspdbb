@@ -1,4 +1,5 @@
 <?php
+  // Only for form pages
 
 /**
  * Master layout template
@@ -197,9 +198,14 @@ function generate_meta_tags() {
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <?php
+      $secret = getenv('FORM_PASSWORD') ?: '';
+      $GLOBALS['page_js_vars'] = "window.__FORM_PASSWORD__ = " . json_encode($secret) . ";";
+      ?>
     <script><?php yield_js_vars(); ?></script>
     <script src="<?php echo asset_path('js/common.js'); ?>?v=<?php echo APP_VERSION; ?>"></script>
     <script src="<?php echo asset_path('js/analytics.js'); ?>?v=<?php echo APP_VERSION; ?>"></script>
+    <script src="<?php echo asset_path('js/components/custom/passwordhash.js'); ?>"></script>
     <script src="<?php echo asset_path('js/components/custom/portraitimagecomponent.js'); ?>"></script>
     <?php yield_javascript(); ?>
 </body>

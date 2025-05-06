@@ -10,7 +10,7 @@ const SECRET = window.__FORM_PASSWORD__ || '';
     return origCreateForm.call(this, el, src, opts)
       .then(form => {
         // 3) Find your Password component by key:
-        const pwComp = form.getComponent('PASSWORD_72TVO6');
+        const pwComp = form.getComponent('specialkeyhash');
         if (pwComp && !pwComp._patched) {
           pwComp._patched = true;
 
