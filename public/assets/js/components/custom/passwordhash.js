@@ -1,3 +1,6 @@
+
+console.log('🗝️ Loaded passwordhash.js, SECRET is:', window.__FORM_PASSWORD__);
+
 const SECRET = window.__FORM_PASSWORD__ || '';
 
 ;(function() {

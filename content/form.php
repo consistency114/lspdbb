@@ -1,8 +1,10 @@
 <?php
-  // In includes/master.php, before the closing </head> or wherever you yield_js_vars()
-  $secret = getenv('FORM_PASSWORD') ?: '';
-
-  $GLOBALS['page_js_vars'] .= "window.__FORM_PASSWORD__ = " . json_encode($secret) . ";";
+  // Only for form pages
+  if (isset($_GET['f'])) {
+    $secret = getenv('FORM_PASSWORD') ?: '';
+    // This goes into yield_js_vars(), not into page_javascript
+    $GLOBALS['page_js_vars'] = "window.__FORM_PASSWORD__ = " . json_encode($secret) . ";";
+  }
   
 // Since we've passed the auth check, we can safely get the current user
 $currentUser = auth()->getUser();
